@@ -6,10 +6,74 @@
   <meta name="theme-color" content="#4f46e5">
   <meta name="description" content="Meilensteine, Teilzahlungen, VSP und Sicherheiten auf einer gemeinsamen Zeitachse planen.">
   <title>Zahlungsplan · Trapanotto</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20261009-8">
-  <script src="lib/lucide.min.js" defer></script>
-  <script src="app.mjs?v=20261009-8" type="module"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22%3E%3Crect width=%2240%22 height=%2240%22 rx=%2211%22 fill=%22%234f46e5%22/%3E%3Cpath d=%22M9 29h7v-8h8v-8h7%22 fill=%22none%22 stroke=%22white%22 stroke-width=%223%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22m25 8 6 5-5 5%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22/%3E%3C/svg%3E" type="image/svg+xml">
+  <script src="lib/lucide.min.js"></script>
+  <style>
+/* Shared visual foundation with Trapanotto Gantt. */
+:root{--bg:#f4f5f8;--panel:#fff;--ink:#202535;--muted:#717b8e;--line:#e6e9f0;--line-strong:#d4d9e4;--accent:#4f46e5;--orange:#e87d25;--amber:#f3bc4e;--radius:12px;--shadow:0 2px 8px #1c253506;--font:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font)}button,input,select,textarea{font:inherit}button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #a5a0ff;outline-offset:3px}input:focus,textarea:focus,select:focus{outline:2px solid #c7c3ff;outline-offset:1px;border-color:var(--accent)}[hidden]{display:none!important}a{color:var(--accent)}h1,h2,h3,p{margin:0}svg.lucide{width:17px;height:17px;flex:0 0 auto;stroke-width:1.8}button svg{pointer-events:none}.spacer{flex:1}.eyebrow{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:6px}
+.toolbar{min-height:70px;padding:14px 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);background:var(--panel)}.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-size:17px;font-weight:750;white-space:nowrap}.brand-symbol{display:grid;place-items:center;width:31px;height:31px;border-radius:9px;background:var(--accent);color:#fff}.brand-symbol svg{width:20px;height:20px}.brand-divider{height:21px;width:1px;background:var(--line-strong);margin:0 7px}.app-name{font-size:14px;font-weight:500;color:var(--muted)}.file-actions,.undo-group,.project-actions,.chart-tools{display:flex;align-items:center;gap:8px}.undo-group{gap:4px;margin-right:8px}.btn{border:1px solid var(--line-strong);border-radius:8px;background:white;color:var(--ink);padding:8px 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:650;white-space:nowrap;text-decoration:none;min-height:36px}.btn:hover{background:#f8f9fc;border-color:#b7bfd1}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}.btn.primary:hover{background:#4338ca}.btn.icon-only{padding:8px;width:36px}.btn.subtle{background:transparent;border-color:transparent;color:var(--muted)}.btn.subtle:hover{background:#eef0f7;color:var(--ink)}.btn.danger{color:#c53554}.btn.danger:hover{color:#a92540;background:#fff0f3}.btn.compact{padding:6px 10px;min-height:32px}.btn[aria-pressed=true]{color:var(--accent);border-color:#cbc7fe;background:#f6f5ff}
+.wrap{padding:20px 30px 16px;max-width:2000px;margin:auto}.project-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:23px}.title-line{display:flex;align-items:center;gap:12px}.title-line h1{font-size:26px;line-height:1.25;letter-spacing:-.6px;overflow-wrap:anywhere}.subtitle{color:var(--muted);font-size:12px;margin-top:6px}.badge{display:inline-block;padding:3px 7px;border-radius:5px;background:#ebe9ff;color:#6856c2;font-size:10px;letter-spacing:.2px;font-weight:700}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}.stat{border:1px solid var(--line);background:white;padding:17px 19px;border-radius:var(--radius);display:flex;align-items:flex-start;gap:13px;min-width:0;box-shadow:var(--shadow)}.stat-icon{display:grid;place-items:center;width:35px;height:35px;border-radius:9px;background:#f3f2ff;color:var(--accent);flex:0 0 auto}.stat:nth-child(1) .stat-icon{background:#fff3e6;color:#d17b24}.stat:nth-child(3) .stat-icon{background:#fff7e0;color:#b68a21}.stat:nth-child(4) .stat-icon{background:#fff0f3;color:#d34560}.stat-label{font-size:11px;font-weight:600;color:var(--muted)}.stat-value{font-size:23px;line-height:1.4;font-weight:700;letter-spacing:-.6px;font-variant-numeric:tabular-nums}.stat-value.small{font-size:18px;margin:4px 0 3px}.stat-meta{font-size:10px;color:var(--muted)}button.stat{text-align:left;cursor:pointer;width:100%}button.stat:hover{border-color:#c6c1f5}
+.panel{background:white;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:22px}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--line)}.panel-heading h2{font-size:15px;font-weight:700}.panel-heading p{color:var(--muted);font-size:11px;margin-top:3px}.seg{display:flex;align-items:center;background:#f0f1f6;padding:3px;border-radius:8px}.seg button{font-size:11px;border:0;background:transparent;color:var(--muted);padding:6px 9px;font-weight:600;border-radius:6px}.seg button.on{background:white;color:var(--ink);box-shadow:0 1px 4px #20253510}.chart-scroll{overflow:auto;max-height:760px;scrollbar-width:thin;scrollbar-color:#c7ccdb #f4f5f8;overscroll-behavior-x:contain}.chart-scroll svg{display:block;user-select:none}.chart-scroll svg .interactive{cursor:pointer;outline:none}.chart-scroll svg .draggable{cursor:ew-resize;touch-action:none}.chart-scroll svg .interactive:focus-visible .focus-shape{stroke:#4f46e5;stroke-width:3}.chart-scroll svg .interactive:hover .focus-shape{filter:brightness(.96);stroke:#4f46e5;stroke-width:1.5}.chart-footer{border-top:1px solid var(--line);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;color:var(--muted);font-size:10px}.legend{display:flex;align-items:center;gap:20px;flex-wrap:wrap}.legend>span{display:flex;align-items:center;gap:6px}.key{display:inline-block;width:13px;height:8px;border-radius:2px}.key.line{height:3px;background:var(--orange)}.key.security{background:var(--amber)}.key.warranty{background:#b6c0d0}.key.diamond{width:8px;height:8px;background:#df4662;transform:rotate(45deg);border-radius:1px}.chart-hint{white-space:nowrap}.notice{margin:0 0 18px;padding:11px 15px;border:1px solid #f2d490;border-radius:9px;background:#fffbf0;color:#826015;font-size:12px}.notice.error{border-color:#efb6c1;background:#fff2f5;color:#a72d49}.notice p+p{margin-top:4px}
+.records-heading{padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--line)}.tabs{display:flex;gap:6px}.tabs button{border:0;background:none;color:var(--muted);font-size:12px;font-weight:650;padding:9px 11px;border-radius:7px;white-space:nowrap}.tabs button[aria-selected=true]{color:var(--accent);background:#f2f0ff}.tabs button span{font-size:10px;font-weight:600;border-radius:4px;padding:1px 5px;background:#e9ecf2;margin-left:6px}.tabs button[aria-selected=true] span{background:#e4e0ff}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}thead{background:#f9fafc}th{font-size:10px;font-weight:650;color:#748096;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:13px 14px;border-bottom:1px solid #edf0f5;vertical-align:middle}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fcfcff}.num-cell{width:44px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}.row-number{background:#f1f3f8;border-radius:6px;min-width:24px;height:24px;display:inline-grid;place-items:center;font-size:10px}.payment-value{font-weight:750;color:#bb651e;white-space:nowrap;font-size:14px}.secondary{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}.entry-name{border:0;background:transparent;padding:0;font-size:12px;line-height:1.5;font-weight:650;color:var(--ink);text-align:left;display:block;max-width:330px}.entry-name:hover{text-decoration:underline;color:var(--accent)}.row-description{max-width:390px}.date-cell{white-space:nowrap;font-variant-numeric:tabular-nums}.cumulative{font-variant-numeric:tabular-nums;font-size:11px;min-width:80px}.mini-track{height:3px;background:#f0f1f6;margin-top:5px;border-radius:5px;width:60px;overflow:hidden}.mini-track i{display:block;height:100%;background:#f1b36c}.vsp-badge{display:inline-flex;align-items:center;gap:5px;color:#bf3b55;font-size:10px;font-weight:650;white-space:nowrap}.vsp-badge:before{content:'';display:block;width:7px;height:7px;background:#df4662;transform:rotate(45deg)}.security-ref{font-size:10px;line-height:1.5;max-width:245px}.security-ref+.security-ref{margin-top:5px}.security-ref b{font-weight:600;color:#8e6b22}.row-actions{white-space:nowrap;width:76px;text-align:right}.row-actions .btn{width:28px;min-height:28px;padding:5px;display:inline-flex}.row-actions svg{width:14px;height:14px}.table-foot{display:flex;justify-content:space-between;gap:15px;padding:12px 18px;background:#fafbfe;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.table-foot strong{color:var(--ink)}.empty{padding:40px 20px;text-align:center;color:var(--muted)}.empty h3{color:var(--ink);font-size:15px;margin-bottom:7px}.empty p{margin-bottom:15px;font-size:12px}.period-warning{color:#c23854}.kind-pill{font-size:10px;background:#fff6df;border-radius:5px;padding:3px 6px;color:#956f1d;display:inline-block}.kind-pill.warranty{background:#eef1f6;color:#63738a}.page-footer{display:flex;justify-content:space-between;gap:10px;color:#929aad;font-size:10px;margin:4px 2px 12px}#saveStatus:before{content:'';display:inline-block;vertical-align:1px;width:5px;height:5px;border-radius:50%;background:#7b9f8a;margin-right:6px}
+dialog{border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 90px #131b3840;padding:24px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 40px);color:var(--ink);overflow:auto}dialog::backdrop{background:#17203975;backdrop-filter:blur(3px)}.editor{width:640px}.small-dialog{width:460px}.dialog-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:20px}.dialog-head h2{font-size:20px;letter-spacing:-.4px}.dialog-head .btn{margin:-4px -6px 0 0}.small-dialog>p,.export-dialog>p{font-size:12px;color:var(--muted);margin:-4px 0 20px;line-height:1.7}.form-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px 16px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field.full,.full{grid-column:1/-1}.field>label,.field-label{font-size:11px;font-weight:650;color:#596276}.field input:not([type=checkbox]),.field select,.field textarea{border:1px solid var(--line-strong);border-radius:7px;padding:9px 10px;background:#fff;color:var(--ink);width:100%;min-height:39px;font-size:12px}.field textarea{resize:vertical;min-height:68px}.field input:disabled{background:#f5f6f9;color:#8c95a6;opacity:1}.field small,.form-note{font-size:10px;color:var(--muted);line-height:1.6}.value-pair{display:grid;grid-template-columns:minmax(70px,1fr) 110px;gap:8px}.checkbox-field{display:flex;gap:9px;align-items:center;font-size:12px;font-weight:600;padding:12px 13px;background:#f8f9fc;border:1px solid var(--line);border-radius:8px;cursor:pointer}.checkbox-field input{accent-color:var(--accent);width:16px;height:16px;margin:0}.fieldset{grid-column:1/-1;border:1px solid var(--line);border-radius:10px;padding:15px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.fieldset .legend-label{grid-column:1/-1;font-size:11px;font-weight:700}.dialog-actions{display:flex;align-items:center;gap:8px;margin-top:24px}.form-error{font-size:12px;color:#af2442;margin-top:16px;padding:10px;border-radius:7px;background:#fff1f4}.choice{display:flex;align-items:center;gap:13px;background:white;border:1px solid var(--line-strong);border-radius:10px;padding:18px 15px;width:100%;text-align:left;color:var(--accent);margin-top:12px}.choice:hover{border-color:var(--accent);background:#faf9ff}.choice div{flex:1}.choice strong{display:block;color:var(--ink);font-size:13px}.choice span{display:block;font-size:11px;color:var(--muted);margin-top:4px}.export-dialog{width:1000px}.export-preview{background:#f1f3f8;border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:58vh;padding:15px}.export-preview img{display:block;max-width:100%;margin:auto;box-shadow:0 2px 8px #17203914}.export-dialog #exportStatus{font-size:11px;margin:10px 0 0}.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#242b3d;color:white;padding:12px 19px;border-radius:9px;font-size:12px;box-shadow:0 6px 25px #17203928;z-index:1000;max-width:90vw}.mobile-notice{display:none}
+.editor.milestone-editor{width:740px}.milestone-editor .dialog-actions{position:sticky;bottom:-24px;background:#fff;padding:14px 0;margin-top:16px;border-top:1px solid var(--line);z-index:2}.security-section{border-top:1px solid var(--line);padding-top:20px;margin-top:2px}.security-section-head,.security-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.security-section-head h3{font-size:13px}.security-section-head p,.security-empty{font-size:11px;color:var(--muted);margin-top:4px}.security-card{border:1px solid #e9d9b6;background:#fffdf9;border-radius:10px;padding:16px;margin-top:14px}.security-card-head strong{font-size:11px;color:#9a7332}.security-card-head .btn{min-height:28px;height:28px}.duration-tools{display:flex;flex-wrap:wrap;gap:9px;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}.duration-tools>div{display:flex;gap:5px}.duration-tools .btn{font-size:10px;min-height:28px;padding:4px 7px}.security-name{font-size:10px;font-weight:650;color:#8e6b22}.security-empty{padding:12px 0}.security-ref .secondary{white-space:normal}
+@media(max-width:1150px){.toolbar{padding:12px 20px;gap:10px}.brand{font-size:15px}.brand-divider{margin:0 2px}.app-name{font-size:12px}.file-actions{gap:5px}.file-actions .btn{padding:8px}.undo-group{margin-right:3px}.wrap{padding:22px 20px 14px}.stat{padding:14px 12px;gap:9px}.stat-value{font-size:21px}.stat-value.small{font-size:16px}.chart-hint{display:none}.panel-heading{align-items:flex-start}.chart-tools{gap:6px}.chart-tools .btn span{display:none}.table-scroll table{min-width:950px}}
+@media(max-width:850px){.toolbar{flex-wrap:wrap;padding:12px 16px}.file-actions{margin-left:auto}.file-actions .btn span{display:none}.file-actions #saveBtn span,.file-actions #exportBtn span{display:inline}.wrap{padding:20px 16px}.title-line h1{font-size:23px}.project-heading{align-items:flex-start}.project-actions{flex-direction:column;align-items:stretch}.stats{grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:14px 16px}.panel-heading{flex-wrap:wrap;padding:14px}.chart-tools{width:100%;justify-content:space-between}.chart-tools .btn span{display:inline}.records-heading{padding:10px;flex-wrap:wrap}.tabs{gap:0}.tabs button{padding:8px;font-size:11px}.tabs button span{margin-left:3px}.page-footer{flex-direction:column}.chart-footer{padding:10px 12px}.legend{gap:13px}}
+@media(max-width:599px){.application{display:none}.mobile-notice{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:100svh;padding:35px;max-width:520px;margin:auto}.mobile-notice .brand-symbol{width:48px;height:48px;font-size:28px;margin-bottom:28px}.mobile-notice h1{font-size:30px;line-height:1.18;letter-spacing:-1px;margin-bottom:18px}.mobile-notice p:not(.eyebrow){color:var(--muted);font-size:15px;line-height:1.65;margin-bottom:25px}.mobile-notice .btn{padding:11px 15px;font-size:13px}}
+.phone-screen .application{display:none}.phone-screen .mobile-notice{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;max-width:530px;min-height:100svh;margin:auto;padding:28px}.phone-screen .mobile-notice .brand-symbol{margin-bottom:20px}.phone-screen .mobile-notice h1{font-size:27px;margin-bottom:15px}.phone-screen .mobile-notice p:not(.eyebrow){color:var(--muted);margin-bottom:22px}
+
+/* Editable project title in the toolbar, matching Gantt. */
+.toolbar-project{display:flex;align-items:center;gap:4px;flex:1;min-width:180px;max-width:460px}
+.toolbar-project .btn{flex:0 0 36px}
+.title-input{flex:1;min-width:0;width:100%;font-size:16px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--ink);padding:6px 8px;border-radius:8px;text-overflow:ellipsis}
+.title-input:hover,.title-input:focus{background:#f0f1f6}
+.title-input:focus{outline:2px solid #c7c3ff;outline-offset:1px;border-color:transparent}
+.file-actions{flex:0 0 auto;margin-left:auto}
+
+/* Fit the full date range to the available width; keep the record list below it. */
+.chart-scroll{overflow:visible;max-height:none}
+.chart-scroll svg{max-width:100%;height:auto}
+.chart-scroll svg .draggable{cursor:grab}
+.chart-scroll svg .resize-handle{cursor:ew-resize;touch-action:none}
+.chart-scroll svg .interactive:hover .resize-handle{fill:#4f46e51a;stroke:#4f46e5;stroke-width:1}
+.table-scroll{overflow:visible}
+.table-scroll table{min-width:0;table-layout:fixed}
+.table-scroll th,.table-scroll td{overflow-wrap:anywhere;white-space:normal}
+
+.table-scroll .date-cell{font-size:11px}.table-scroll .row-actions{white-space:normal}
+@media(max-width:1100px){
+  .table-scroll thead{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
+  .table-scroll tbody{display:block}.table-scroll tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:10px 16px;border-bottom:1px solid var(--line)}
+  .table-scroll td{display:block;width:auto!important;min-width:0;padding:0;border:0;text-align:left}
+  .table-scroll td:before{content:attr(data-label);display:block;font-size:10px;color:var(--muted);font-weight:600;margin-bottom:3px}
+  .table-scroll td.num-cell{display:none}.table-scroll td[data-label="Meilenstein"],.table-scroll td[data-label="Projektphase"],.table-scroll td[data-label="Sicherheiten / Beschreibung"]{grid-column:1/-1}
+  .table-scroll .entry-name,.table-scroll .row-description,.table-scroll .security-ref{max-width:none}.table-foot{flex-wrap:wrap}
+}
+.export-dialog{width:min(1120px,calc(100vw - 40px));padding:24px}
+.export-bar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+.export-bar h2{font-size:17px;margin-right:auto}.export-width{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.export-width input{width:76px;border:1px solid var(--line-strong);border-radius:6px;padding:6px;font-size:12px;color:var(--ink)}
+.export-stage{position:relative;background:#eef0f5;border:1px solid var(--line-strong);border-radius:10px;padding:16px;height:clamp(160px,55vh,620px);max-height:calc(100dvh - 250px);overflow:hidden;display:flex;align-items:flex-start;justify-content:center}
+.export-frame{position:relative;flex:none;background:#fff;border:1px solid #c9ceda;box-shadow:0 10px 30px #14182824;user-select:none}
+.export-frame img{display:block;width:100%;height:100%;object-fit:fill;user-select:none;-webkit-user-drag:none}
+.export-resize{position:absolute;top:0;right:-20px;width:18px;height:100%;cursor:ew-resize;background:#4f46e514;border-radius:8px;touch-action:none}
+.export-resize:after{content:"";position:absolute;top:50%;right:4px;width:4px;height:46px;transform:translateY(-50%);border-left:2px solid #4f46e58c;border-right:2px solid #4f46e58c}
+.export-guide{position:absolute;border:2px dashed var(--accent);border-radius:4px;background:#4f46e50b;pointer-events:none;z-index:4}
+.export-dialog #exportStatus{font-size:11px;color:var(--muted);margin:12px 0 0}.export-dialog .dialog-actions{margin-top:16px}
+@media(max-width:850px){.export-dialog{padding:18px}.export-bar{gap:8px}.export-bar h2{flex-basis:calc(100% - 60px)}.export-bar>[data-close]{position:absolute;right:15px;top:15px}.export-width{margin-left:auto}.export-dialog .dialog-actions{flex-wrap:wrap}}
+@media print{body{background:white;margin:0}.application,.mobile-notice,dialog,.toast{display:none!important}#printReport{display:block!important;width:100%;margin:0;padding:0}#printReport *{-webkit-print-color-adjust:exact;print-color-adjust:exact}#printReport svg{max-height:none;break-inside:avoid}}
+
+.toolbar-project{flex:0 1 auto;min-width:100px;max-width:460px;gap:4px}
+.title-input{flex:0 1 auto;min-width:60px;max-width:calc(100% - 40px)}
+
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.chart-scroll svg .interactive:hover .payment-step,.chart-scroll svg .interactive:focus-visible .payment-step{stroke:#4f46e5;stroke-width:3.5}
+.table-scroll .row-actions{white-space:nowrap}.payment-value{white-space:normal;overflow-wrap:anywhere}
+
+.toolbar>.seg{flex:0 0 auto}
+@media(max-width:1150px){.toolbar{flex-wrap:wrap}.file-actions{margin-left:auto}}
+  </style>
 </head>
 <body>
   <section class="mobile-notice" aria-labelledby="mobileTitle">
@@ -30,8 +94,8 @@
       <div class="file-actions">
         <div class="undo-group"><button class="btn icon-only" id="undoBtn" aria-label="Rückgängig" title="Rückgängig (Strg+Z)"><i data-lucide="undo-2"></i></button><button class="btn icon-only" id="redoBtn" aria-label="Wiederherstellen" title="Wiederherstellen (Strg+Umschalt+Z)"><i data-lucide="redo-2"></i></button></div>
         <button class="btn" id="newBtn"><i data-lucide="file-plus-2"></i><span>Neu</span></button>
-        <button class="btn" id="loadBtn"><i data-lucide="folder-open"></i><span>Öffnen</span></button>
-        <button class="btn" id="saveBtn"><i data-lucide="download"></i><span>Speichern</span></button>
+        <button class="btn" id="loadBtn" title="Zahlungsplan aus HTML- oder JSON-Datei öffnen"><i data-lucide="folder-open"></i><span>Öffnen</span></button>
+        <button class="btn" id="saveBtn" title="Zahlungsplan als HTML-Datei speichern (ganze App in einer Datei)"><i data-lucide="download"></i><span>Speichern</span></button>
         <button class="btn" id="printOpenBtn" title="Druckvorschau öffnen"><i data-lucide="printer"></i><span>Drucken</span></button>
         <button class="btn primary" id="exportBtn"><i data-lucide="image"></i><span>Exportieren</span></button>
       </div>
@@ -61,5 +125,774 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
   <noscript><p class="notice error">Bitte JavaScript aktivieren, um den Zahlungsplan zu verwenden.</p></noscript>
+<script id="embedded-project" type="application/json">{}</script>
+<script type="module">
+/* ---- Datenmodell ---- */
+const M=(()=>{
+// Calendar dates are UTC day numbers, so dragging is independent of daylight saving time.
+const DAY = 86400000;
+const FORMAT = 'trapanotto-zahlungsplan';
+const uid = () => crypto.randomUUID();
+const copy = value => JSON.parse(JSON.stringify(value));
+const day = date => Date.parse(date + 'T00:00:00Z') / DAY;
+const iso = number => new Date(Math.round(number) * DAY).toISOString().slice(0, 10);
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+function validDate(value) {
+  return typeof value === 'string' && /^(20\d{2}|2100)-\d{2}-\d{2}$/.test(value)
+    && Number.isFinite(day(value)) && iso(day(value)) === value;
+}
+const dateLabel = date => validDate(date) ? date.split('-').reverse().join('.') : '–';
+const number = (n, decimals = 2) => new Intl.NumberFormat('de-CH', {maximumFractionDigits: decimals}).format(n);
+const percentLabel = n => number(n) + ' %';
+const money = (n, currency = 'CHF') => new Intl.NumberFormat('de-CH', {style:'currency',currency,maximumFractionDigits:2}).format(n);
+const KINDS = {
+  advance:'Anzahlungsbürgschaft', performance:'Vertragserfüllungsbürgschaft',
+  warrantyBond:'Gewährleistungsbürgschaft', warranty:'Gewährleistungsfrist', other:'Sonstige Sicherheit'
+};
+const sortedMilestones = p => p.milestones.map((m,i)=>({...m,_order:i})).sort((a,b)=>a.date.localeCompare(b.date)||a._order-b._order);
+const share = (item, p) => item.unit === 'amount' ? (p.total > 0 ? item.value / p.total * 100 : 0) : item.value;
+const amount = (item, p) => item.unit === 'amount' ? item.value : (p.total > 0 ? p.total * item.value / 100 : null);
+function cumulative(p) {
+  let total = 0;
+  return sortedMilestones(p).map((m,i)=>({...m, index:i+1, percent:share(m,p), cumulative:(total += share(m,p)), amount:amount(m,p)}));
+}
+function resolveDate(item, edge, p) {
+  return p.milestones.find(m=>m.id === item[edge+'Milestone'])?.date || item[edge];
+}
+function ranges(p) {
+  return [...p.securities,...p.phases].flatMap(s=>[resolveDate(s,'start',p),resolveDate(s,'end',p)]).concat(p.milestones.filter(m=>m.value===0).map(m=>m.securityEnd||m.date));
+}
+const milestoneSecurities = (milestoneId,p) => p.securities.filter(s=>s.startMilestone===milestoneId);
+function securitySummary(s,p) {
+  return (s.kind==='warranty'?'':(s.unit==='amount'?money(s.value,p.currency):percentLabel(s.value))+' ')+s.name+' · bis '+dateLabel(resolveDate(s,'end',p))+(s.description?' · '+s.description:'');
+}
+function securitiesAtMilestone(milestoneId,p) {
+  const milestone=p.milestones.find(m=>m.id===milestoneId),own=milestone?.value===0?[milestone.name+' · bis '+dateLabel(milestone.securityEnd||milestone.date)]:[];
+  return own.concat(p.securities.filter(s=>s.startMilestone===milestoneId||s.endMilestone===milestoneId).map(s=>s.startMilestone===milestoneId?securitySummary(s,p):'Ende: '+s.name)).join('; ');
+}
+function isoWeek(dayNumber) {
+  const date=new Date(dayNumber*DAY),thursday=dayNumber+3-((date.getUTCDay()+6)%7);
+  const year=new Date(thursday*DAY).getUTCFullYear();
+  return {year,week:Math.ceil((thursday-day(year+'-01-01')+1)/7)};
+}
+function warnings(p) {
+  const out = [], sum=cumulative(p).at(-1)?.cumulative || 0;
+  if(p.milestones.length && Math.abs(sum-100)>.005) out.push(sum>100 ? `Die Teilzahlungen ergeben ${percentLabel(sum)} – ${percentLabel(sum-100)} über 100 %.` : `Noch ${percentLabel(100-sum)} der Vertragssumme sind nicht zugeordnet.`);
+  for(const s of [...p.securities,...p.phases]) if(resolveDate(s,'end',p)<resolveDate(s,'start',p)) out.push(`„${s.name}“: Das Laufzeitende liegt vor dem Beginn. Bitte Termine prüfen.`);
+  for(const m of p.milestones)if(m.value===0&&m.securityEnd&&m.securityEnd<m.date)out.push(`„${m.name}“: Das Laufzeitende liegt vor dem Zieltermin. Bitte Termine prüfen.`);
+  return out;
+}
+function blank() {
+  return {format:FORMAT,version:1,title:'Neuer Zahlungsplan',reference:'',total:0,currency:'CHF',notes:'',milestones:[],securities:[],phases:[],demo:false};
+}
+function example() {
+  const p=blank();Object.assign(p,{title:'Beispiel-Zahlungsplan',reference:'Beispielprojekt · Neubau',demo:true});
+  const rows=[
+    ['Bestellabsichtserklärung','2026-07-31',0,'Start Realisierungsplanung'],
+    ['Nach Vertragsunterzeichnung (MS 01)','2026-08-14',20,''],
+    ['Beginn Montage Stahlbau','2027-03-01',25,''],
+    ['Beginn Montage Palettenfördertechnik','2027-10-04',20,''],
+    ['Abschluss Einheben RBG','2028-01-12',15,''],
+    ['Abschluss Inbetriebnahme Palettenfördertechnik','2028-04-06',10,''],
+    ['Bereitschaft zum Start des Produktivbetriebs','2028-07-06',5,'Bestands-Anbindung (Go-Live Bestandsanlage). Start Gewährleistung; Übergang von Nutzen und Gefahr.'],
+    ['Nach Abnahme','2028-09-06',5,'Ablösung der Vertragserfüllungsbürgschaft durch eine Gewährleistungsbürgschaft.']
+  ];
+  p.milestones=rows.map((r,i)=>({id:'ms-'+(i+1),name:r[0],date:r[1],value:r[2],unit:'percent',description:r[3],vsp:i===6,vspValue:0,vspUnit:'percent',vspNote:i===6?'Go-Live – VSP gemäss Vereinbarung':'',...(r[2]===0?{securityEnd:r[1]}:{})}));
+  p.securities=[
+    {id:'sec-1',name:'Anzahlungsbürgschaft',kind:'advance',value:20,unit:'percent',start:'2026-08-14',end:'2027-03-01',startMilestone:'ms-2',endMilestone:'ms-3',description:'Bis Montagebeginn Stahlbau'},
+    {id:'sec-2',name:'Vertragserfüllungsbürgschaft',kind:'performance',value:10,unit:'percent',start:'2027-03-01',end:'2028-09-06',startMilestone:'ms-3',endMilestone:'ms-8',description:'Bis Abnahme'},
+    {id:'sec-3',name:'Gewährleistungsbürgschaft',kind:'warrantyBond',value:5,unit:'percent',start:'2028-09-06',end:'2031-07-06',startMilestone:'ms-8',endMilestone:'',description:'Bis Ende Gewährleistung'},
+    {id:'sec-4',name:'36 Monate Gewährleistung',kind:'warranty',value:0,unit:'percent',start:'2028-07-06',end:'2031-07-06',startMilestone:'ms-7',endMilestone:'',description:'Gewährleistungsfrist ab Go-Live'}
+  ];
+  p.phases=[
+    ['Planung','2026-07-31','2026-09-30'],['Anlagenbau','2026-10-01','2027-02-28'],['Montage','2027-03-01','2028-03-31'],
+    ['Inbetriebnahme','2028-04-01','2028-06-05'],['Hochlauf','2028-06-06','2028-07-05'],['Produktivbetrieb','2028-07-06','2031-07-06']
+  ].map((r,i)=>({id:'phase-'+i,name:r[0],start:r[1],end:r[2],description:''}));
+  return p;
+}
+const text=(v,max=2000)=>typeof v==='string'?v.trim().slice(0,max):'';
+function numeric(v,label,max=1e14){if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>max)throw Error(`${label}: ungültiger Wert.`);return v;}
+function date(v,label){if(!validDate(v))throw Error(`${label}: ungültiges Datum (2000–2100).`);return v;}
+function identity(v,ids){const id=text(v,100);if(!id||ids.has(id))throw Error('Fehlende oder doppelte Eintrags-ID.');ids.add(id);return id;}
+function normalize(raw) {
+  if(!raw||raw.format!==FORMAT||raw.version!==1)throw Error('Keine unterstützte Zahlungsplan-Datei (Version 1).');
+  if(!Array.isArray(raw.milestones)||!Array.isArray(raw.securities)||!Array.isArray(raw.phases))throw Error('Die Datei enthält keine gültigen Planungsdaten.');
+  if(raw.milestones.length>500||raw.securities.length>200||raw.phases.length>100)throw Error('Maximal 500 Meilensteine, 200 Sicherheiten und 100 Phasen werden unterstützt.');
+  const p=blank(),ids=new Set();
+  p.title=text(raw.title,150)||'Zahlungsplan';p.reference=text(raw.reference,300);p.notes=text(raw.notes,5000);p.demo=raw.demo===true;
+  p.currency=['CHF','EUR','USD','GBP'].includes(raw.currency)?raw.currency:'CHF';p.total=numeric(raw.total,'Vertragssumme');
+  const val=(r)=>({unit:r.unit==='amount'?'amount':'percent',value:numeric(r.value,'Teilzahlung / Sicherheit',r.unit==='amount'?1e14:100)});
+  p.milestones=raw.milestones.map(m=>({id:identity(m.id,ids),name:text(m.name,180)||'Meilenstein',date:date(m.date,'Zieltermin'),...val(m),description:text(m.description),vsp:m.vsp===true,vspValue:numeric(m.vspValue??0,'VSP',m.vspUnit==='amount'?1e14:100),vspUnit:m.vspUnit==='amount'?'amount':'percent',vspNote:text(m.vspNote),...(m.value===0||m.securityEnd?{securityEnd:date(m.securityEnd||m.date,'Laufzeitende')}:{})}));
+  const refs=new Set(p.milestones.map(m=>m.id));
+  p.securities=raw.securities.map(s=>{
+    for(const key of ['startMilestone','endMilestone'])if(s[key]&&!refs.has(s[key]))throw Error('Eine Sicherheit verweist auf einen fehlenden Meilenstein.');
+    return {id:identity(s.id,ids),name:text(s.name,180)||'Sicherheit',kind:Object.hasOwn(KINDS,s.kind)?s.kind:'other',...val(s),start:date(s.start,'Beginn'),end:date(s.end,'Laufzeitende'),startMilestone:text(s.startMilestone,100),endMilestone:text(s.endMilestone,100),description:text(s.description)};
+  });
+  p.phases=raw.phases.map(s=>({id:identity(s.id,ids),name:text(s.name,180)||'Phase',start:date(s.start,'Phasenbeginn'),end:date(s.end,'Phasenende'),description:text(s.description)}));
+  if(p.total<=0&&[...p.milestones,...p.securities].some(m=>m.unit==='amount'&&m.value>0))throw Error('Für Teilzahlungen oder Sicherheiten als Geldbetrag ist eine Vertragssumme erforderlich.');
+  // Preserve old standalone securities and their dates when moving them into milestones.
+  for(const security of p.securities)if(!security.startMilestone){
+    let owner=p.milestones.find(m=>m.date===security.start);
+    if(!owner){
+      if(p.milestones.length>=500)throw Error('Für die Zuordnung der Sicherheiten sind zusätzliche Meilensteine erforderlich (maximal 500).');
+      owner={id:uid(),name:('Beginn '+security.name).slice(0,180),date:security.start,securityEnd:security.start,value:0,unit:'percent',description:'',vsp:false,vspValue:0,vspUnit:'percent',vspNote:''};
+      p.milestones.push(owner);
+    }
+    security.startMilestone=owner.id;
+  }
+  return p;
+}
+function fromGantt(raw) {
+  if(!raw||!Array.isArray(raw.phases))throw Error('Keine unterstützte Gantt-Datei.');
+  const p=blank();p.title=text(raw.title,150)||'Gantt-Zahlungsplan';
+  for(const phase of raw.phases){
+    const acts=(phase.activities||[]).filter(a=>validDate(a.start)&&validDate(a.end));
+    for(const a of acts.filter(a=>a.milestone))p.milestones.push({id:uid(),name:text(a.name,180)||'Meilenstein',date:a.start,value:0,unit:'percent',description:'',vsp:false,vspValue:0,vspUnit:'percent',vspNote:''});
+    if(acts.length)p.phases.push({id:uid(),name:text(phase.name,180)||'Phase',start:acts.map(a=>a.start).sort()[0],end:acts.map(a=>a.end).sort().at(-1),description:''});
+  }
+  return normalize(p);
+}
+return {DAY,FORMAT,uid,copy,day,iso,today,validDate,dateLabel,number,percentLabel,money,KINDS,sortedMilestones,share,amount,cumulative,resolveDate,ranges,milestoneSecurities,securitySummary,securitiesAtMilestone,isoWeek,warnings,blank,example,normalize,fromGantt};
+})();
+
+/* ---- Zeitachse und Bericht ---- */
+const {esc,domain,timeline,report}=(()=>{
+const {day,iso,today,dateLabel,number,percentLabel,money,cumulative,resolveDate,ranges,share,securitiesAtMilestone,isoWeek}=M;
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cut=(text,n)=>text.length>n?text.slice(0,n-1)+'…':text;
+const months=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const letters=['J','F','M','A','M','J','J','A','S','O','N','D'];
+const f=n=>Number(n.toFixed(2));
+const text=(x,y,value,attrs='')=>`<text x="${f(x)}" y="${f(y)}" ${attrs}>${esc(value)}</text>`;
+const line=(x1,y1,x2,y2,attrs='')=>`<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" ${attrs}/>`;
+const rect=(x,y,w,h,attrs='')=>`<rect x="${f(x)}" y="${f(y)}" width="${f(Math.max(0,w))}" height="${f(Math.max(0,h))}" ${attrs}/>`;
+const diamond=(x,y,size,attrs='')=>`<path d="M${f(x)} ${f(y-size)}l${size} ${size}l-${size} ${size}l-${size} -${size}Z" ${attrs}/>`;
+const editable=(type,id,label,body,drag=false)=>`<g class="interactive${drag?' draggable':''}" data-type="${type}" data-id="${esc(id)}" role="button" tabindex="0" aria-label="${esc(label)}"><title>${esc(label)}</title>${body}</g>`;
+const labelContext=typeof document==='undefined'?null:document.createElement('canvas').getContext('2d');
+function labelWidth(value,bold=false){if(labelContext){labelContext.font=(bold?'700':'400')+' 10px "Segoe UI",Arial,sans-serif';return labelContext.measureText(value).width;}return [...value].reduce((sum,c)=>sum+(/[ilI.,:!\s]/.test(c)?2.8:/[MW@%]/.test(c)?8:5.5),0)*(bold?1.08:1);}
+function paymentLines(value,width,prefix){
+  const boldExtra=labelWidth(prefix,true)-labelWidth(prefix),available=()=>width-(out.length?0:boldExtra);
+  const out=[];let current='';
+  for(const word of value.trim().split(/\s+/)){
+    if(current&&labelWidth(current+word)>available()){out.push(current);current='';}
+    for(const c of word){if(labelWidth(current+c)>available()&&current){out.push(current);current='';}current+=c;}
+    current+=' ';
+  }
+  if(current.trim())out.push(current.trim());return out.map(line=>line.trim());
+}
+function segmentHits(a,b,r){
+  let low=0,high=1;
+  for(const [v,delta,min,max] of [[a.x,b.x-a.x,r.x1,r.x2],[a.y,b.y-a.y,r.y1,r.y2]]){
+    if(Math.abs(delta)<.001){if(v<=min||v>=max)return false;continue;}
+    let t1=(min-v)/delta,t2=(max-v)/delta;if(t1>t2)[t1,t2]=[t2,t1];low=Math.max(low,t1);high=Math.min(high,t2);if(low>=high)return false;
+  }
+  return true;
+}
+function domain(p,scale='month') {
+  const dates=[...p.milestones.map(m=>m.date),...ranges(p)].sort();
+  const first=day(dates[0]||today()),last=day(dates.at(-1)||today());
+  const a=new Date(first*86400000),b=new Date(last*86400000);
+  if(scale==='week')return {start:first-(a.getUTCDay()+6)%7,end:last-(b.getUTCDay()+6)%7+7};
+  const step=scale==='quarter'?3:1;
+  return {start:Date.UTC(a.getUTCFullYear(),Math.floor(a.getUTCMonth()/step)*step,1)/86400000,
+    end:Date.UTC(b.getUTCFullYear(),Math.floor(b.getUTCMonth()/step)*step+step,1)/86400000};
+}
+function timeline(p,options={}) {
+  const scale=options.scale||'month',labels=options.labels!==false,prefix=options.prefix||'live';
+  const {start,end}=options.domain||domain(p,scale),left=192,right=24,header=53;
+  const firstDate=new Date(start*86400000),lastDate=new Date((end-1)*86400000);
+  const width=Math.max(360,options.width||1300);
+  const plotW=width-left-right,x=d=>left+(d-start)/(end-start)*plotW,datedX=date=>x(day(date));
+  let y=header;
+  const phaseSlots=[],phaseLayout=[];
+  for(const phase of [...p.phases].sort((a,b)=>a.start.localeCompare(b.start))){let slot=phaseSlots.findIndex(end=>end<phase.start);if(slot<0)slot=phaseSlots.length;phaseSlots[slot]=phase.end;phaseLayout.push({phase,slot});}
+  const phaseHeight=Math.max(1,phaseSlots.length)*34+12,phaseY=y;y+=phaseHeight;
+  // Later securities sit above earlier ones, forming an ascending sequence like the reference.
+  const securities=p.securities.filter(s=>s.kind!=='warranty'),warranties=p.securities.filter(s=>s.kind==='warranty');
+  const securityRows=[...securities.map(item=>({type:'security',item,date:resolveDate(item,'start',p)})),
+    ...p.milestones.filter(m=>m.value===0).map(item=>({type:'milestone',item,date:item.date}))].sort((a,b)=>b.date.localeCompare(a.date));
+  const securityY=y;y+=Math.max(1,securityRows.length)*36+12;
+  const warrantyY=y;if(warranties.length)y+=warranties.length*36+12;
+  const vspY=y,vspMs=p.milestones.filter(m=>m.vsp).sort((a,b)=>a.date.localeCompare(b.date));
+  // VSP events on separate tracks when their labels would overlap.
+  const vspSlots=[],vspLayout=[];
+  for(const m of vspMs){const px=datedX(m.date),bw=Math.min(245,m.name.length*5.5+26);let slot=vspSlots.findIndex(last=>last<px-8);if(slot<0)slot=vspSlots.length;vspSlots[slot]=px+bw;vspLayout.push({m,slot});}
+  y+=Math.max(1,vspSlots.length)*30+15;
+  const payY=y,points=cumulative(p).filter(m=>m.value>0),payTop=y+38,payBottom=payTop+(labels?Math.max(210,Math.min(400,points.length*46)):210);
+  const total=points.at(-1)?.cumulative||0,maxY=Math.max(100,Math.ceil(total/10)*10),py=value=>payBottom-value/maxY*(payBottom-payTop);
+  const positions=points.map(m=>({...m,x:datedX(m.date),y:py(m.cumulative)})),segments=[];
+  let previous={x:left,y:payBottom};
+  for(const m of positions){segments.push({x1:previous.x,y1:previous.y,x2:m.x,y2:previous.y},{x1:m.x,y1:previous.y,x2:m.x,y2:m.y});previous=m;}
+  segments.push({x1:previous.x,y1:previous.y,x2:width-right,y2:previous.y});
+  const curveObstacles=segments.map(s=>({x1:Math.min(s.x1,s.x2)-4,y1:Math.min(s.y1,s.y2)-4,x2:Math.max(s.x1,s.x2)+4,y2:Math.max(s.y1,s.y2)+4}));
+  const placed=[];
+  if(labels){
+    // Keep complete labels to the right below each corner. Stack crowded cards downwards.
+    for(const m of positions){
+      const prefix=percentLabel(m.percent),label=prefix+' '+m.name,maxWidth=Math.min(238,plotW-16,Math.max(112,labelWidth(label)+labelWidth(prefix,true)-labelWidth(prefix)+20));
+      const minWidth=Math.min(maxWidth,Math.max(112,...label.split(/\s+/).map(word=>labelWidth(word)+20)));
+      const cardObstacles=placed.map(b=>({x1:b.x-8,y1:b.y-8,x2:b.x+b.w+8,y2:b.y+b.h+8}));
+      const obstacles=[...curveObstacles,...cardObstacles];
+      let best;
+      const widths=[maxWidth,170].map(w=>Math.max(minWidth,Math.min(maxWidth,w)));
+      for(const bw of new Set(widths)){
+        const lines=paymentLines(label,bw-20,prefix),bh=lines.length*14+12;
+        const candidates=[m.x+12,m.x+40,m.x+80,...(positions.length<80?[m.x+140,m.x+220,...placed.filter(b=>b.x+b.w>m.x&&b.x+b.w<m.x+350).map(b=>b.x+b.w+8)]:[])].map(px=>Math.min(width-right-bw-8,Math.max(left+8,px)));
+        for(const bx of new Set(candidates)){
+          let by=m.y+10;
+          for(let attempt=0;attempt<=obstacles.length;attempt++){
+            const hits=obstacles.filter(o=>bx<o.x2&&bx+bw>o.x1&&by<o.y2&&by+bh>o.y1);
+            if(!hits.length)break;
+            by=Math.max(...hits.map(o=>o.y2));
+          }
+          const anchorX=Math.max(bx+9,Math.min(bx+bw-9,m.x)),from={x:m.x+5,y:m.y+5},to={x:anchorX,y:by};
+          const crossings=obstacles.filter(o=>segmentHits(from,to,o)).length,displaced=by>m.y+10.1||Math.abs(bx-m.x-12)>.1;
+          const score=(by-m.y-10)*1.5+Math.abs(bx-m.x-12)*.6+crossings*10+(maxWidth-bw)*.06;
+          if(!best||score<best.score)best={x:bx,y:by,w:bw,h:bh,label,prefix,lines,anchorX,score,displaced};
+        }
+      }
+      m.labelBox=best;placed.push(best);
+    }
+  }
+  // Route displaced callouts around the other cards, keeping every full name readable.
+  for(const m of positions)if(m.labelBox?.displaced){
+    const box=m.labelBox,from={x:m.x+2,y:m.y+2};
+    const cards=placed.filter(b=>b!==box).map(b=>({x1:b.x-1,y1:b.y-1,x2:b.x+b.w+1,y2:b.y+b.h+1}));
+    const curves=segments.map(s=>({x1:Math.min(s.x1,s.x2)-1.25,y1:Math.min(s.y1,s.y2)-1.25,x2:Math.max(s.x1,s.x2)+1.25,y2:Math.max(s.y1,s.y2)+1.25})).filter(r=>!(from.x>r.x1&&from.x<r.x2&&from.y>r.y1&&from.y<r.y2));
+    const cardObstacles=[...cards,{x1:box.x+.01,y1:box.y+.01,x2:box.x+box.w-.01,y2:box.y+box.h-.01}],routes=[];
+    const ends=[{x:box.anchorX,y:box.y},...[box.x,box.x+box.w].flatMap(x=>[{x,y:box.y+9},{x,y:box.y+box.h/2},{x,y:box.y+box.h-9}])];
+    const routesAt=[left+3,width-right-3,...cards.flatMap(r=>[r.x1-4,r.x2+4])];
+    const rowsAt=cards.filter(r=>r.x2>Math.min(from.x,box.x)-10&&r.x1<box.x+box.w+10).flatMap(r=>[r.y1-4,r.y2+4]);
+    for(const to of ends){
+      routes.push([from,to],[from,{x:from.x,y:to.y},to],[from,{x:to.x,y:from.y},to]);
+      for(const rx of new Set(routesAt))if(rx>=left&&rx<=width-right)routes.push([from,{x:rx,y:from.y},{x:rx,y:to.y-4},{x:to.x,y:to.y-4},to]);
+      for(const ry of new Set(rowsAt))if(ry>=payY+4)routes.push([from,{x:from.x,y:ry},{x:to.x,y:ry},to]);
+    }
+    let best;
+    for(const route of routes){let length=0,hits=0,crossings=0;for(let i=1;i<route.length;i++){const a=route[i-1],b=route[i];length+=Math.hypot(a.x-b.x,a.y-b.y);hits+=cardObstacles.filter(r=>segmentHits(a,b,r)).length;crossings+=curves.filter(r=>segmentHits(a,b,r)).length;}const score=hits*100000+crossings*1000+length+(route.length-2)*8;if(!best||score<best.score)best={route,score};}
+    box.connector=[{x:m.x,y:m.y},...best.route];
+  }
+  const height=Math.max(payBottom+48,...placed.map(b=>b.y+b.h+23));
+  let content='',defs='';
+  content+=rect(0,0,width,height,'fill="#fff"');
+  for(let year=firstDate.getUTCFullYear();day(year+'-01-01')<end;year++){
+    const a=x(Math.max(start,day(year+'-01-01'))),b=x(Math.min(end,day((year+1)+'-01-01')));
+    content+=rect(a,0,b-a,height,`fill="${year%2?'#fff':'#fafbfe'}"`);
+    content+=rect(a,0,b-a,26,'fill="#f0f2f7"');
+    if((scale!=='week'||plotW/(end-start)*28<70)&&b-a>35)content+=text(a+10,18,year,'font-size="11" font-weight="700" fill="#4a566f"');
+    for(let month=0;month<12;month++){
+      const md=Date.UTC(year,month,1)/86400000,periodEnd=Date.UTC(year,month+(scale==='quarter'?3:1),1)/86400000;
+      if(periodEnd<=start||md>=end)continue;
+      const mx=x(Math.max(start,md)),nx=x(Math.min(end,periodEnd)),mw=nx-mx;
+      if(scale==='week'){
+        if(mw>=70)content+=text(mx+8,18,months[month]+' '+year,'font-size="11" font-weight="650" fill="#4a566f" data-period="month-group"');
+        content+=line(mx,0,mx,26,'stroke="#d9dfeb"');
+        continue;
+      }
+      if(scale==='quarter'){
+        if(month%3!==0)continue;
+        content+=line(mx,26,mx,height,'stroke="#dfe5ef"');
+        content+=text(mx+9,44,'Q'+(Math.floor(month/3)+1),`font-size="11" fill="#748198" data-period="quarter" data-start="${iso(md)}"`);
+        continue;
+      }
+      if(mw<11&&month%3!==0)continue;
+      content+=line(mx,26,mx,height,`stroke="${month===0?'#d9dfeb':'#e9edf4'}" stroke-width="1"`);
+      content+=text(mx+(mw<36?mw/2:7),44,mw>=36?months[month]:mw<11?'Q'+(Math.floor(month/3)+1):letters[month],`font-size="10" fill="#7a8599" data-period="month" data-start="${iso(md)}"${mw<36?' text-anchor="middle"':''}`);
+    }
+  }
+  if(scale==='week'){
+    const first=start-((new Date(start*86400000).getUTCDay()+6)%7);
+    const weekWidth=plotW/(end-start)*7,labelEvery=Math.max(1,Math.ceil(22/weekWidth));
+    for(let tick=first;tick<end;tick+=7){
+      const a=x(Math.max(start,tick)),b=x(Math.min(end,tick+7)),week=isoWeek(tick);
+      content+=line(a,26,a,height,'stroke="#e6eaf2"');
+      if((tick-first)/7%labelEvery===0){const cx=Math.max(left+12,Math.min(width-right-12,(a+b)/2));content+=text(cx,44,(b-a>36?'KW ':'')+String(week.week).padStart(2,'0'),`font-size="9" text-anchor="middle" fill="#748198" data-period="week" data-start="${iso(tick)}" data-week-year="${week.year}"`);}
+    }
+  }
+  content+=rect(left,payBottom+1,plotW,height-payBottom-1,'fill="#fff"');
+  // Sidebar backgrounds are painted after the grid, keeping section labels readable.
+  content+=rect(0,0,left,height,'fill="#fff"');
+  content+=rect(0,0,left,header,'fill="#f5f6fa"');
+  content+=text(18,24,'ZEITRAUM','font-size="9" font-weight="700" letter-spacing="1" fill="#8290a5"');
+  const rangeLabel=firstDate.getUTCFullYear()===lastDate.getUTCFullYear()?String(firstDate.getUTCFullYear()):firstDate.getUTCFullYear()+' – '+lastDate.getUTCFullYear();
+  content+=text(18,42,rangeLabel,'font-size="11" font-weight="600" fill="#4a566f"');
+  content+=line(left,0,left,height,'stroke="#d9dfeb"');
+  for(const border of [header,securityY,warrantyY,vspY,payY,height-1])content+=line(0,border,width,border,'stroke="#e5e9f1"');
+  content+=text(18,phaseY+26,'Projektphasen','font-size="11" font-weight="650" fill="#526077"');
+  content+=text(18,phaseY+41,p.phases.length+' Phasen','font-size="9" fill="#9aa3b2"');
+  if(!p.phases.length)content+=text(left+15,phaseY+29,'Noch keine Projektphasen','font-size="10" fill="#a0a8b7"');
+  let clip=0;
+  for(const {phase:s,slot} of phaseLayout){
+    const a=datedX(s.start),b=datedX(s.end)+plotW/(end-start),barY=phaseY+10+slot*34,w=Math.max(3,b-a),cid=prefix+'-phase-'+clip++;
+    defs+=`<clipPath id="${cid}">${rect(a+3,barY,w-6,25,'rx="5"')}</clipPath>`;
+    const grip=Math.min(10,w/2);
+    content+=editable('phase',s.id,`${s.name} · ${dateLabel(s.start)} – ${dateLabel(s.end)}`,rect(a,barY,w,25,'rx="5" fill="#e8e5fb" class="focus-shape"')+(w>32?text(a+8,barY+16,cut(s.name,Math.max(3,Math.floor((w-12)/5.2))),`font-size="10" font-weight="600" fill="#685ab3" clip-path="url(#${cid})"`):'')+rect(a,barY-4,grip,33,'fill="transparent" data-edge="start" class="resize-handle"')+rect(a+w-grip,barY-4,grip,33,'fill="transparent" data-edge="end" class="resize-handle"'),true);
+  }
+  const securityRow=(s,rowY,milestone=false)=>{
+    const aDate=milestone?s.date:resolveDate(s,'start',p),bDate=milestone?(s.securityEnd||s.date):resolveDate(s,'end',p),a=datedX(aDate),b=datedX(bDate)+plotW/(end-start),bad=bDate<aDate,w=Math.max(4,b-a),warranty=s.kind==='warranty',title=`${s.name}${warranty||milestone?'':' · '+(s.unit==='amount'?money(s.value,p.currency):percentLabel(s.value))} · ${dateLabel(aDate)} – ${dateLabel(bDate)}`,cid=prefix+'-security-'+clip++;
+    defs+=`<clipPath id="${cid}">${rect(a+4,rowY+6,w-8,24,'rx="4"')}</clipPath>`;
+    let bar=rect(a,rowY+6,w,24,`rx="4" fill="${bad?'#ffe1e6':warranty?'#d9e0eb':'#f8cf76'}" class="focus-shape"`);
+    const label=(warranty||milestone?'':percentLabel(share(s,p))+' · ')+s.name;
+    if(w>32)bar+=text(a+8,rowY+22,cut(label,Math.max(3,Math.floor((w-12)/5.1))),`font-size="10" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550" clip-path="url(#${cid})"`);
+    else{const after=width-right-(a+w+8),before=a-left-8,useRight=after>=before,space=useRight?after:before;bar+=text(useRight?a+w+8:a-8,rowY+22,cut(label,Math.max(3,Math.floor(space/5.5))),`font-size="10" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550"${useRight?'':' text-anchor="end"'}`);}
+    for(const [edge,dx] of [['start',a],['end',a+w]])bar+=rect(dx-5,rowY+1,10,34,`fill="transparent" data-edge="${edge}" class="resize-handle"`);
+    if(warranty){content+=text(18,rowY+17,'Gewährleistung','font-size="11" font-weight="650" fill="#526077"');content+=text(18,rowY+30,cut(s.name,28),'font-size="9" fill="#96a0b2"');}
+    content+=editable(milestone?'milestone':'security',s.id,title,bar,true);
+  };
+  for(let i=1;i<securityRows.length;i++)content+=line(left,securityY+5+i*36,width-right,securityY+5+i*36,'stroke="#e5e9f1"');
+  securityRows.forEach(({type,item:m},i)=>{
+    const rowY=securityY+5+i*36;
+    securityRow(m,rowY,type==='milestone');
+  });
+  if(securityRows.length){content+=text(18,securityY+(warrantyY-securityY)/2-2,'Sicherheiten','font-size="11" font-weight="650" fill="#526077"');content+=text(18,securityY+(warrantyY-securityY)/2+13,'Bürgschaft / Garantie / Termine','font-size="9" fill="#96a0b2"');}
+  if(!securityRows.length){content+=text(18,securityY+26,'Sicherheiten','font-size="11" font-weight="650" fill="#526077"');content+=text(left+15,securityY+28,'Noch keine Sicherheiten','font-size="10" fill="#a0a8b7"');}
+  warranties.forEach((s,i)=>securityRow(s,warrantyY+5+i*36));
+  content+=text(18,vspY+24,'Verzugsschadenspauschale','font-size="10" font-weight="650" fill="#526077"');
+  content+=text(18,vspY+38,'VSP-Termine','font-size="9" fill="#9aa3b2"');
+  for(const {m,slot} of vspLayout){const mx=datedX(m.date),my=vspY+22+slot*30,label=cut(m.name,34),flip=mx+13+label.length*5.5>width-right;content+=editable('milestone',m.id,`${m.name} · VSP · ${dateLabel(m.date)}${m.vspNote?' · '+m.vspNote:''}`,diamond(mx,my,7,'fill="#df4662" stroke="#fff" stroke-width="2" class="focus-shape"')+rect(mx-12,my-12,24,24,'fill="transparent"')+text(mx+(flip?-13:13),my+4,label,`font-size="10" font-weight="600" fill="#b84f63"${flip?' text-anchor="end"':''}`),true);}
+  if(!vspMs.length)content+=text(left+15,vspY+27,'Keine VSP-Termine erfasst','font-size="10" fill="#a0a8b7"');
+  const axisLeft=left-101,axisWidth=87,axisCenter=axisLeft+axisWidth/2,axisY=(payTop+payBottom)/2-10,gradient=prefix+'-payment-axis';
+  defs+=`<linearGradient id="${gradient}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eea33c"/><stop offset="1" stop-color="#fff0cf"/></linearGradient>`;
+  content+=text(47,axisY,'Zahlungsverlauf (in %)',`text-anchor="middle" font-size="11" font-weight="650" fill="#526077" transform="rotate(-90 47 ${f(axisY)})"`);
+  for(let pct=0;pct<=maxY;pct+=maxY>150?Math.ceil(maxY/100)*10:10){
+    const ay=py(pct)-10,barWidth=axisWidth*pct/maxY;
+    content+=line(left,py(pct),width-right,py(pct),`stroke="${pct===100?'#e1c5a4':'#e8ecf3'}"${pct===100?' stroke-dasharray="4 4"':''}`);
+    content+=line(axisLeft-3,ay+10,left-4,ay+10,'stroke="#edf0f5"');
+    if(pct>0)content+=rect(axisLeft,ay-9,barWidth,18,`rx="1" fill="url(#${gradient})" stroke="#e9ba70" stroke-width=".5" data-axis-percent="${pct}"`);
+    content+=text(axisCenter,ay+4,number(pct)+' %','text-anchor="middle" font-size="10" font-weight="550" fill="#76531f"');
+  }
+  let d=`M${left} ${payBottom}`;
+  for(const m of positions)d+=` H${f(m.x)} V${f(m.y)}`;
+  d+=` H${f(width-right)}`;
+  content+=`<path d="${d} V${payBottom} H${left}Z" fill="#efaa53" fill-opacity=".08"/>`;
+  content+=`<path d="${d}" fill="none" stroke="#e88a36" stroke-width="2.5" stroke-linejoin="miter"/>`;
+  for(const m of positions)if(m.labelBox?.connector){const d=m.labelBox.connector.map((pt,i)=>(i?'L':'M')+f(pt.x)+' '+f(pt.y)).join(' ');content+=`<path d="${d}" fill="none" stroke="#c5a37b" stroke-width="1" class="payment-connector" pointer-events="none"/>`;}
+  for(const [index,m] of positions.entries()){
+    const previousY=index?positions[index-1].y:payBottom;
+    const title=`${m.name} · ${dateLabel(m.date)} · ${percentLabel(m.percent)} · kumuliert ${percentLabel(m.cumulative)}`;
+    let body=rect(m.x-8,Math.min(previousY,m.y)-4,16,Math.abs(previousY-m.y)+8,'fill="transparent" class="payment-hit"')+line(m.x,previousY,m.x,m.y,'stroke="transparent" stroke-width="3.5" class="payment-step" pointer-events="none"');
+    if(m.labelBox){
+      const box=m.labelBox;
+      body+=rect(box.x,box.y,box.w,box.h,'rx="5" fill="#fff8ed" stroke="#efd6b6" class="payment-label focus-shape"');
+      box.lines.forEach((label,i)=>{body+=i?text(box.x+10,box.y+16+i*14,label,'font-size="10" font-weight="400" fill="#975b24" class="payment-label-text"'):`<text x="${f(box.x+10)}" y="${f(box.y+16)}" font-size="10" font-weight="400" fill="#975b24" class="payment-label-text"><tspan font-weight="700">${esc(box.prefix)}</tspan><tspan>${esc(label.slice(box.prefix.length))}</tspan></text>`;});
+    }
+    content+=editable('milestone',m.id,title,body,true);
+  }
+  if(!points.length)content+=text(left+plotW/2,payTop+104,'Erfasse eine Teilzahlung, um den Zahlungsverlauf zu sehen.','text-anchor="middle" font-size="12" fill="#98a2b2"');
+  content+=text(left,height-13,'Zieltermine der Teilzahlungen','font-size="9" fill="#9aa3b2"');
+  content+=text(width-right,height-13,'Gesamt '+percentLabel(total),'text-anchor="end" font-size="10" font-weight="650" fill="#bf7430"');
+  return {markup:`<svg xmlns="http://www.w3.org/2000/svg" width="${f(width)}" height="${height}" viewBox="0 0 ${f(width)} ${height}" role="group" aria-label="Zahlungsplan: ${points.length} Teilzahlungen, ${percentLabel(total)} kumulierte Teilzahlungen" style="font-family:'Segoe UI',Arial,sans-serif"><defs>${defs}</defs>${content}</svg>`,content,defs,width,height,start,end,left,plotW,positions};
+}
+function wrapped(value,max){max=Math.max(1,max);const words=String(value||'').split(/\s+/),out=[];let line='';for(const word of words){if(line.length+word.length+1>max&&line){out.push(line);line='';}if(word.length>max){if(line){out.push(line);line='';}for(let i=0;i<word.length;i+=max)out.push(word.slice(i,i+max));}else line+=(line?' ':'')+word;}if(line)out.push(line);return out.length?out:['–'];}
+function report(p,labels=true,options={}){
+  const width=Math.max(520,Math.min(4000,options.width||1480)),withList=options.withList!==false,inner=width-64;
+  const chart=timeline(p,{width:inner,labels,scale:options.scale||'month',prefix:'report'});
+  const subtitle=[p.reference,p.total>0?'Vertragssumme '+money(p.total,p.currency):''].filter(Boolean).join(' · '),subLines=subtitle?wrapped(subtitle,Math.floor(inner/6)):[];
+  const chartY=84+subLines.length*15;let y=chartY+chart.height;
+  let body=rect(0,0,width,chartY,'fill="#fff"')+text(32,32,'Trapanotto / Zahlungsplan','font-size="12" font-weight="600" fill="#6c768b"')+text(32,65,cut(p.title,Math.max(10,Math.floor(inner/14))),'font-size="25" font-weight="700" fill="#222b3b"');
+  subLines.forEach((line,i)=>body+=text(32,85+i*15,line,'font-size="11" fill="#7a8598"'));
+  body+=`<g transform="translate(32,${chartY})">${chart.content}</g>`;
+  const table=(title,headers,weights,rows)=>{
+    const sum=weights.reduce((a,b)=>a+b,0),widths=weights.map(w=>inner*w/sum);
+    y+=32;body+=text(32,y,title,'font-size="16" font-weight="700" fill="#263246"');y+=16;
+    const headLines=headers.map((h,i)=>wrapped(h,Math.floor((widths[i]-20)/6))),headHeight=Math.max(31,Math.max(...headLines.map(ls=>ls.length))*15+16);
+    body+=rect(32,y,inner,headHeight,'rx="4" fill="#eef1f7"');
+    let tx=32;headLines.forEach((ls,i)=>{ls.forEach((line,j)=>body+=text(tx+10,y+19+j*15,line,'font-size="10" font-weight="650" fill="#5b6880"'));tx+=widths[i];});y+=headHeight;
+    rows.forEach((cells,index)=>{
+      const lines=cells.map((s,i)=>wrapped(s,Math.floor((widths[i]-20)/6))),rh=Math.max(38,Math.max(...lines.map(a=>a.length))*16+18);
+      body+=rect(32,y,inner,rh,`fill="${index%2?'#f8f9fc':'#fff'}"`);tx=32;
+      lines.forEach((ls,i)=>{ls.forEach((line,j)=>body+=text(tx+10,y+22+j*16,line,`font-size="11" fill="${i===0?'#ba702d':'#40506a'}"${i===0?' font-weight="650"':''}`));tx+=widths[i];});y+=rh;
+      body+=line(32,y,width-32,y,'stroke="#e6eaf2"');
+    });
+  };
+  if(withList){
+    table('Meilensteine & Teilzahlungen',['Teilzahlung','Meilenstein / Beschreibung','Zieltermin','Kumuliert','VSP','Sicherheiten / Beschreibung'],[124,374,112,95,213,498],cumulative(p).map(m=>[
+      percentLabel(m.percent)+(m.amount!==null?' / '+money(m.amount,p.currency):''),m.name+(m.description?' — '+m.description:''),dateLabel(m.date),percentLabel(m.cumulative),m.vsp?('VSP'+(m.vspValue?' · '+(m.vspUnit==='amount'?money(m.vspValue,p.currency):percentLabel(m.vspValue)):'')+(m.vspNote?' · '+m.vspNote:'')):'–',securitiesAtMilestone(m.id,p)||'–'
+    ]));
+    if(p.phases.length)table('Projektphasen',['Phase','Beginn','Ende','Beschreibung'],[350,160,160,746],p.phases.map(s=>[s.name,dateLabel(s.start),dateLabel(s.end),s.description||'–']));
+    if(p.notes){y+=28;body+=text(32,y,'Notizen','font-size="13" font-weight="700" fill="#526077"');for(const line of wrapped(p.notes,Math.floor(inner/6))){y+=17;body+=text(32,y,line,'font-size="11" fill="#66748a"');}}
+  }
+  y+=35;body+=text(32,y,'Zahlungsplan · Trapanotto · '+dateLabel(today()),'font-size="10" fill="#99a2b2"');y+=25;
+  return {markup:`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}" viewBox="0 0 ${width} ${y}" style="font-family:'Segoe UI',Arial,sans-serif"><defs>${chart.defs}</defs><rect width="100%" height="100%" fill="white"/>${body}</svg>`,width,height:y};
+}
+return {esc,domain,timeline,report};
+})();
+
+/* ---- Anwendung ---- */
+const $=id=>document.getElementById(id),KEY='trapanotto:zahlungsplan:v1',VIEW='trapanotto:zahlungsplan:view',EKEY='trapanotto:zahlungsplan:embedded:v1';
+const icon=name=>`<i data-lucide="${name}"></i>`,icons=()=>window.lucide?.createIcons();
+const phone=matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<600;
+document.documentElement.classList.toggle('phone-screen',phone);
+let p=M.example(),history=[],future=[],view={scale:'month',labels:true,tab:'milestones'},chartGeometry,drag=null,ignoreClickUntil=0,editing=null,toastTimer,exportData=null,migrationRaw=null,renamedExample=false;
+// Ein in einer gespeicherten HTML-Datei eingebetteter Plan hat Vorrang, aber nur wenn er neu ist
+// (sonst würden lokale Weiterbearbeitungen beim Neuladen von der alten Einbettung überschrieben).
+let embeddedRaw=null,fromEmbedded=false;
+try{const text=($('embedded-project')?.textContent||'').trim();if(text&&text!=='{}')embeddedRaw=text;}catch{}
+if(embeddedRaw){let applied=null;try{applied=localStorage.getItem(EKEY);}catch{}
+  if(embeddedRaw!==applied){try{const raw=JSON.parse(embeddedRaw);p=!raw.format&&!raw.milestones&&Array.isArray(raw.phases)?M.fromGantt(raw):M.normalize(raw);fromEmbedded=true;try{localStorage.setItem(EKEY,embeddedRaw);}catch{}}catch{}}}
+if(!fromEmbedded)try{const raw=localStorage.getItem(KEY);if(raw){const saved=JSON.parse(raw);p=M.normalize(saved);if(['Palettenfördertechnik','Palettenfördetechnik'].includes(p.title)){p.title='Beispiel-Zahlungsplan';renamedExample=true;}if(saved.securities?.some(s=>!s.startMilestone))migrationRaw=raw;}const v=JSON.parse(localStorage.getItem(VIEW)||'{}');if(['week','month','quarter'].includes(v.scale))view.scale=v.scale;if(typeof v.labels==='boolean')view.labels=v.labels;}
+catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Der gespeicherte Plan konnte nicht geladen werden. Die gespeicherten Daten bleiben zunächst unverändert. Öffne eine gesicherte Datei oder starte bewusst einen neuen Plan.';}
+function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(p));$('saveStatus').textContent='Lokal in diesem Browser gespeichert';$('storageAlert').hidden=true;}catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Der Browser konnte den Plan nicht speichern. Bitte sichere deine Änderungen über „Speichern“ als Datei.';$('saveStatus').textContent='Änderungen noch nicht gesichert';}}
+function saveView(){try{localStorage.setItem(VIEW,JSON.stringify({scale:view.scale,labels:view.labels}));}catch{}}
+function commit(next,message='',keepDemo=false){const clean=M.normalize(next);if(!keepDemo)clean.demo=false;history.push(M.copy(p));if(history.length>50)history.shift();future=[];p=clean;persist();render();if(message)toast(message);}
+function undo(){if(!history.length)return;future.push(M.copy(p));p=history.pop();persist();render();toast('Änderung rückgängig gemacht');}
+function redo(){if(!future.length)return;history.push(M.copy(p));p=future.pop();persist();render();toast('Änderung wiederhergestellt');}
+const titleMeasure=document.createElement('canvas').getContext('2d');
+function fitProjectTitle(){const input=$('projectTitle'),style=getComputedStyle(input);titleMeasure.font=`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;input.style.width=Math.ceil(titleMeasure.measureText(input.value||input.placeholder).width+20)+'px';}
+function render(){
+  $('projectTitle').value=p.title;fitProjectTitle();
+  document.title=p.title+' · Zahlungsplan';
+  const warnings=M.warnings(p);$('warnings').hidden=!warnings.length;$('warnings').innerHTML=warnings.map(w=>'<p>'+esc(w)+'</p>').join('');
+  $('undoBtn').disabled=!history.length;$('redoBtn').disabled=!future.length;
+  for(const s of ['milestone','phase'])$(s+'Count').textContent=p[{milestone:'milestones',phase:'phases'}[s]].length;
+  renderChart();renderTable();icons();
+}
+function renderChart(project=p,fixedDomain){const container=$('chartScroll');chartGeometry=timeline(project,{width:container.clientWidth||1300,scale:view.scale,labels:view.labels,domain:fixedDomain});$('chart').innerHTML=chartGeometry.markup;for(const b of document.querySelectorAll('[data-scale]')){const active=b.dataset.scale===view.scale;b.classList.toggle('on',active);b.setAttribute('aria-pressed',active);} $('labelsBtn').setAttribute('aria-pressed',view.labels);}
+const editName=(type,item)=>`<button class="entry-name" data-edit="${type}" data-id="${esc(item.id)}">${esc(item.name)}</button>`;
+const rowActions=(type,item)=>`<td class="row-actions"><button class="btn icon-only subtle" data-edit="${type}" data-id="${esc(item.id)}" aria-label="${esc(item.name)} bearbeiten">${icon('pencil')}</button><button class="btn icon-only subtle danger" data-delete="${type}" data-id="${esc(item.id)}" aria-label="${esc(item.name)} löschen">${icon('trash-2')}</button></td>`;
+function renderTable(){
+  for(const b of document.querySelectorAll('[data-tab]')){const selected=b.dataset.tab===view.tab;b.setAttribute('aria-selected',selected);b.tabIndex=selected?0:-1;}
+  $('recordContent').setAttribute('aria-labelledby','tab-'+view.tab);
+  const type={milestones:'milestone',phases:'phase'}[view.tab],label={milestone:'Meilenstein',phase:'Phase'}[type];
+  $('addRecordBtn').innerHTML=icon('plus')+'<span>'+label+'</span>';
+  if(!p[view.tab].length){$('recordContent').innerHTML=`<div class="empty"><h3>Noch keine ${view.tab==='milestones'?'Meilensteine':view.tab==='securities'?'Sicherheiten':'Projektphasen'}</h3><p>${type==='milestone'?'Erfasse Teilzahlungen mit ihren Zielterminen.':type==='security'?'Plane Bürgschaften und Gewährleistungsfristen mit einem Laufzeitende.':'Ergänze die zeitlichen Abschnitte deines Projekts.'}</p><button class="btn primary" data-add="${type}">${icon('plus')}${label} erfassen</button></div>`;icons();return;}
+  let head='',rows='';
+  if(type==='milestone'){
+    head='<th>Teilzahlung</th><th>Meilenstein</th><th>Zieltermin</th><th>Kumuliert</th><th>VSP</th><th>Sicherheiten / Beschreibung</th><th><span class="secondary">Aktionen</span></th>';
+    rows=M.cumulative(p).map(m=>{
+      const own=m.value===0?`<div class="security-ref"><b>${esc(m.name)}</b><div class="secondary">Laufzeit bis ${M.dateLabel(m.securityEnd||m.date)}</div></div>`:'';
+      const refs=own+p.securities.filter(s=>s.startMilestone===m.id||s.endMilestone===m.id).map(s=>s.startMilestone===m.id?`<div class="security-ref"><button class="entry-name security-name" data-edit="security" data-id="${esc(s.id)}">${s.kind==='warranty'?'':esc(s.unit==='amount'?M.money(s.value,p.currency):M.percentLabel(s.value))+' '}${esc(s.name)}</button><div class="secondary">Laufzeit bis ${M.dateLabel(M.resolveDate(s,'end',p))}${s.description?' · '+esc(s.description):''}</div></div>`:`<div class="security-ref secondary">Ende: ${esc(s.name)}</div>`).join('');
+      return `<tr data-row-id="${esc(m.id)}"><td><div class="payment-value">${M.percentLabel(m.percent)}</div>${m.amount!==null?`<div class="secondary">${M.money(m.amount,p.currency)}</div>`:''}</td><td>${editName(type,m)}${m.description?'<div class="secondary row-description">'+esc(m.description)+'</div>':''}</td><td class="date-cell">${M.dateLabel(m.date)}</td><td class="cumulative">${M.percentLabel(m.cumulative)}<div class="mini-track"><i style="width:${Math.min(100,m.cumulative)}%"></i></div></td><td>${m.vsp?'<span class="vsp-badge">VSP'+(m.vspValue?' · '+(m.vspUnit==='amount'?M.money(m.vspValue,p.currency):M.percentLabel(m.vspValue)):'')+'</span>'+(m.vspNote?'<div class="secondary">'+esc(m.vspNote)+'</div>':''):'<span class="secondary">–</span>'}</td><td>${refs||'<span class="secondary">–</span>'}</td>${rowActions(type,m)}</tr>`;
+    }).join('');
+  }else{
+    head='<th>#</th><th>Projektphase</th><th>Beginn</th><th>Ende</th><th>Dauer</th><th>Aktionen</th>';
+    rows=[...p.phases].sort((a,b)=>a.start.localeCompare(b.start)).map((s,i)=>`<tr data-row-id="${esc(s.id)}"><td class="num-cell">${i+1}</td><td>${editName(type,s)}${s.description?'<div class="secondary">'+esc(s.description)+'</div>':''}</td><td>${M.dateLabel(s.start)}</td><td>${M.dateLabel(s.end)}</td><td>${M.number(M.day(s.end)-M.day(s.start)+1)} Tage</td>${rowActions(type,s)}</tr>`).join('');
+  }
+  const columns=type==='milestone'?['90px','24%','110px','90px','14%','auto','92px']:['44px','auto','110px','110px','90px','92px'];
+  $('recordContent').innerHTML=`<div class="table-scroll"><table><colgroup>${columns.map(width=>`<col style="width:${width}">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;const headings=[...$('recordContent').querySelectorAll('th')].map(th=>th.textContent);for(const row of $('recordContent').querySelectorAll('tbody tr'))[...row.cells].forEach((cell,i)=>cell.dataset.label=headings[i]);icons();
+}
+const field=(name,label,value='',type='text',full=false,extra='')=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value)}" ${extra}></div>`;
+const area=(name,label,value='',full=true)=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><textarea id="f-${name}" name="${name}" maxlength="${name==='notes'?5000:2000}" rows="2">${esc(value)}</textarea></div>`;
+const pair=(prefix,label,value,unit,totalRequired=true)=>`<div class="field"><label for="f-${prefix}Value">${label}</label><div class="value-pair"><input id="f-${prefix}Value" name="${prefix}Value" type="number" min="0" max="${unit==='amount'?1e14:100}" step="0.01" required value="${value}"><select id="f-${prefix}Unit" name="${prefix}Unit" aria-label="Einheit ${label}"><option value="percent"${unit!=='amount'?' selected':''}>Prozent (%)</option><option value="amount"${unit==='amount'?' selected':''}${totalRequired&&p.total<=0?' disabled':''}>${p.currency}</option></select></div><small id="f-${prefix}Hint">${totalRequired&&p.total<=0?'Für Geldbeträge zuerst eine Vertragssumme hinterlegen.':'Prozentwerte beziehen sich auf die Vertragssumme.'}</small></div>`;
+const select=(name,label,options,value,full=false)=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><select name="${name}" id="f-${name}">${Object.entries(options).map(([v,l])=>`<option value="${esc(v)}"${v===value?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
+function milestoneOptions(){return {'':'Festes Datum',...Object.fromEntries(M.sortedMilestones(p).map(m=>[m.id,m.name+' · '+M.dateLabel(m.date)]))};}
+function openEditor(type,id){
+  if(type==='security'){
+    const security=p.securities.find(s=>s.id===id);if(!security)return;
+    openEditor('milestone',security.startMilestone);
+    requestAnimationFrame(()=>document.querySelector(`.security-card[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({block:'center'}));
+    return;
+  }
+  const list={milestone:'milestones',security:'securities',phase:'phases'}[type],item=id?p[list]?.find(x=>x.id===id):null;if(id&&!item)return;
+  editing={type,id:id||M.uid(),securities:type==='milestone'?M.copy(M.milestoneSecurities(id,p)):[]};$('formError').hidden=true;$('deleteEntryBtn').hidden=!item;$('dialogEyebrow').textContent=type==='project'?'Projekt & Berechnung':item?'Eintrag bearbeiten':'Neuer Eintrag';
+  $('editor').classList.toggle('milestone-editor',type==='milestone');
+  $('dialogTitle').textContent={project:'Projektdaten',milestone:'Meilenstein & Sicherheiten',phase:'Projektphase'}[type];
+  let html='',start=M.today();
+  if(type==='project'){
+    html=field('title','Projektname',p.title,'text',true,'required maxlength="150"')+field('reference','Projekt / Referenz',p.reference,'text',true,'maxlength="300"')+field('total','Vertragssumme (optional)',p.total||'','number',false,'min="0" max="100000000000000" step="0.01"')+select('currency','Währung',{CHF:'CHF – Schweizer Franken',EUR:'EUR – Euro',USD:'USD – US-Dollar',GBP:'GBP – Britisches Pfund'},p.currency)+`<p class="form-note full">Mit einer Vertragssumme werden Prozentwerte und Geldbeträge automatisch umgerechnet. Eine Änderung der Währung ändert nur die Bezeichnung, nicht die Beträge.</p>`+area('notes','Projektnotizen',p.notes);
+  }else if(type==='milestone'){
+    const last=M.sortedMilestones(p).at(-1)?.date;start=last?M.iso(Math.min(M.day(last)+30,M.day('2100-12-31'))):start;
+    const m=item||{name:'',date:start,value:Math.round(Math.max(0,100-(M.cumulative(p).at(-1)?.cumulative||0))*100)/100,unit:'percent',description:'',vsp:false,vspValue:0,vspUnit:'percent',vspNote:''};
+    editing.lastDate=m.date;
+    html=field('name','Meilenstein',m.name,'text',true,'required maxlength="180" placeholder="z. B. Nach Vertragsunterzeichnung"')+field('date','Zieltermin',m.date,'date',false,'required min="2000-01-01" max="2100-12-31"')+pair('payment','Teilzahlungswert',m.value,m.unit)+`<div id="nonPaymentSecurity" class="full">${field('securityEnd','Laufzeitende des Sicherheitsbalkens',m.securityEnd||m.date,'date',false,'required min="2000-01-01" max="2100-12-31"')}<p class="form-note">Ohne Teilzahlung wird dieser Meilenstein als Sicherheit dargestellt. Beginn ist der Zieltermin.</p></div>`+area('description','Beschreibung / Vereinbarung',m.description)+`<label class="checkbox-field full"><input type="checkbox" id="f-vsp" name="vsp"${m.vsp?' checked':''}>Meilenstein mit Verzugsschadenspauschale (VSP)</label><div class="fieldset" id="vspFields"${m.vsp?'':' hidden'}>${pair('vsp','Vereinbarte Pauschale (optional)',m.vspValue,m.vspUnit,false)}<p class="form-note">VSP wird separat markiert und nicht zur Teilzahlung addiert. Bedingungen kannst du unten festhalten.</p>${area('vspNote','VSP-Bedingungen / Beschreibung',m.vspNote)}</div><section class="security-section full"><div class="security-section-head"><div><h3>Sicherheiten & Gewährleistung</h3><p>Beginnen am Zieltermin dieses Meilensteins.</p></div><button type="button" class="btn compact" id="addSecurityBtn">${icon('plus')}Sicherheit</button></div><div id="securityEditors"></div></section>`;
+  }else{
+    const s=item||{name:'',start,end:start,description:''};html=field('name','Projektphase',s.name,'text',true,'required maxlength="180"')+field('start','Beginn',s.start,'date',false,'required min="2000-01-01" max="2100-12-31"')+field('end','Ende',s.end,'date',false,'required min="2000-01-01" max="2100-12-31"')+area('description','Beschreibung',s.description);
+  }
+  $('formFields').innerHTML=html;if(type==='milestone')renderSecurityEditors();syncForm();icons();$('editor').showModal();
+}
+function readSecurityDrafts(){
+  if(editing?.type!=='milestone')return;
+  editing.securities=editing.securities.map((s,i)=>{
+    const get=key=>$(`f-s${i}${key}`)?.value??s[key],kind=get('kind');
+    return {...s,name:get('name').trim(),kind,value:kind==='warranty'?0:Number(get('Value')),unit:kind==='warranty'?'percent':get('Unit'),start:$('f-date').value,startMilestone:editing.id,endMilestone:get('endMilestone'),end:get('end'),description:get('description')};
+  });
+}
+function renderSecurityEditors(){
+  if(!$('securityEditors'))return;
+  $('securityEditors').innerHTML=editing.securities.length?editing.securities.map((s,i)=>{
+    const prefix='s'+i;
+    return `<div class="security-card" data-id="${esc(s.id)}" data-index="${i}" data-kind="${esc(s.kind)}"><div class="security-card-head"><strong>Sicherheit ${i+1}</strong><button class="btn icon-only subtle danger" type="button" data-security-remove="${i}" aria-label="Sicherheit ${i+1} entfernen">${icon('trash-2')}</button></div><div class="form-fields">${field(prefix+'name','Bezeichnung',s.name,'text',true,'required maxlength="180"')}${select(prefix+'kind','Art',M.KINDS,s.kind)}${pair(prefix,'Wert der Sicherheit',s.value,s.unit)}${select(prefix+'endMilestone','Laufzeitende',milestoneOptions(),s.endMilestone)}${field(prefix+'end','Enddatum',M.resolveDate(s,'end',p),'date',false,'required min="2000-01-01" max="2100-12-31"')}<div class="duration-tools full"><span class="security-start-date"></span><div>${[12,24,36].map(months=>`<button type="button" class="btn compact" data-months="${months}" data-security-index="${i}">+${months} Monate</button>`).join('')}</div></div>${area(prefix+'description','Beschreibung / Bedingungen',s.description)}</div></div>`;
+  }).join(''):'<p class="security-empty">Für diesen Meilenstein ist noch keine Sicherheit erfasst.</p>';
+  icons();syncSecurityCards();
+}
+function syncSecurityCards(){
+  if(editing?.type!=='milestone'||!$('f-date'))return;
+  for(const card of document.querySelectorAll('.security-card')){
+    const i=card.dataset.index,get=key=>$(`f-s${i}${key}`),kind=get('kind').value,warranty=kind==='warranty';
+    if(card.dataset.kind!==kind&&get('name').value===M.KINDS[card.dataset.kind])get('name').value=M.KINDS[kind];card.dataset.kind=kind;
+    const endId=get('endMilestone').value,m=p.milestones.find(m=>m.id===endId);get('end').disabled=!!m;
+    if(m)get('end').value=m.id===editing.id?$('f-date').value:m.date;
+    get('Value').disabled=warranty;get('Unit').disabled=warranty;get('Value').max=get('Unit').value==='amount'?1e14:100;
+    get('Hint').textContent=warranty?'Gewährleistungsfrist ohne Sicherheitsbetrag.':p.total>0?'Entspricht '+(get('Unit').value==='amount'?M.percentLabel(Number(get('Value').value)/p.total*100):M.money(Number(get('Value').value)*p.total/100,p.currency)):'Für Geldbeträge zuerst eine Vertragssumme hinterlegen.';
+    card.querySelector('.security-start-date').textContent='Beginn: '+M.dateLabel($('f-date').value)+' · mit diesem Meilenstein';
+  }
+}
+function syncForm(){
+  if($('nonPaymentSecurity')){const visible=Number($('f-paymentValue').value)===0,end=$('f-securityEnd'),date=$('f-date').value;if(end.value===editing.lastDate)end.value=date;editing.lastDate=date;end.disabled=!visible;$('nonPaymentSecurity').hidden=!visible;}
+
+  if($('f-vsp')){$('vspFields').hidden=!$('f-vsp').checked;for(const input of $('vspFields').querySelectorAll('input,select,textarea'))input.disabled=!$('f-vsp').checked;}
+  for(const prefix of ['payment','vsp'])if($('f-'+prefix+'Unit')){
+    const unit=$('f-'+prefix+'Unit').value,value=Number($('f-'+prefix+'Value').value);$('f-'+prefix+'Value').max=unit==='amount'?1e14:100;
+    if(p.total>0)$('f-'+prefix+'Hint').textContent='Entspricht '+(unit==='amount'?M.percentLabel(value/p.total*100):M.money(value*p.total/100,p.currency));
+  }
+  syncSecurityCards();
+}
+$('editForm').addEventListener('input',syncForm);$('editForm').addEventListener('change',syncForm);
+$('editForm').addEventListener('submit',e=>{
+  e.preventDefault();const f=new FormData(e.currentTarget),val=name=>String(f.get(name)||'').trim(),num=name=>Number(f.get(name)||0),next=M.copy(p),{type,id}=editing;
+  try{
+    if(type==='project'){Object.assign(next,{title:val('title'),reference:val('reference'),total:num('total'),currency:val('currency'),notes:val('notes')});}
+    else{
+      let item={id,name:val('name'),description:val('description')};
+      if(!item.name)throw Error('Bitte eine Bezeichnung eingeben.');
+      if(type==='milestone'){
+        Object.assign(item,{date:val('date'),value:num('paymentValue'),unit:val('paymentUnit'),vsp:f.has('vsp'),vspValue:num('vspValue'),vspUnit:val('vspUnit')||'percent',vspNote:val('vspNote')});
+        if(item.value===0){item.securityEnd=val('securityEnd')||item.date;if(item.securityEnd<item.date)throw Error('Das Laufzeitende darf nicht vor dem Zieltermin liegen.');}
+        readSecurityDrafts();
+        for(const security of editing.securities){
+          if(!security.name)throw Error('Bitte für jede Sicherheit eine Bezeichnung eingeben.');
+          if(!M.validDate(security.end))throw Error('Bitte ein gültiges Laufzeitende für „'+security.name+'“ eingeben.');
+          if(security.end<item.date)throw Error('Das Laufzeitende von „'+security.name+'“ darf nicht vor dem Meilenstein liegen.');
+        }
+        next.securities=[...next.securities.filter(s=>s.startMilestone!==id),...M.copy(editing.securities)];
+      }else Object.assign(item,{start:val('start'),end:val('end')});
+      if(item.start&&item.end<item.start)throw Error('Das Laufzeitende darf nicht vor dem Beginn liegen.');
+      const list=next[{milestone:'milestones',security:'securities',phase:'phases'}[type]],i=list.findIndex(x=>x.id===id);if(i<0)list.push(item);else list[i]=item;
+    }
+    if(!next.title)throw Error('Bitte einen Projektnamen eingeben.');
+    commit(next);$('editor').close();
+  }catch(err){$('formError').hidden=false;$('formError').textContent=err.message;}
+});
+function ask(title,description,ok='Bestätigen'){
+  $('confirmTitle').textContent=title;$('confirmText').textContent=description;$('confirmOk').textContent=ok;$('confirmDialog').showModal();
+  return new Promise(resolve=>{const close=value=>{$('confirmDialog').close();resolve(value);};$('confirmOk').onclick=()=>close(true);$('confirmCancel').onclick=()=>close(false);$('confirmDialog').oncancel=e=>{e.preventDefault();close(false);};});
+}
+async function deleteEntry(type,id){
+  const list={milestone:'milestones',security:'securities',phase:'phases'}[type],item=p[list].find(x=>x.id===id);if(!item)return;
+  const owned=type==='milestone'?M.milestoneSecurities(id,p).length:0,ending=type==='milestone'?p.securities.filter(s=>s.endMilestone===id&&s.startMilestone!==id).length:0;
+  if(!await ask('Eintrag löschen?',`„${item.name}“ wird entfernt.${owned?' Die '+owned+' zugehörigen Sicherheiten werden ebenfalls entfernt.':''}${ending?' Hier endende Sicherheiten anderer Meilensteine behalten ihr Enddatum.':''} Du kannst die Änderung rückgängig machen.`,'Löschen'))return;
+  const next=M.copy(p);if(type==='milestone'){next.securities=next.securities.filter(s=>s.startMilestone!==id);for(const s of next.securities)if(s.endMilestone===id){s.end=item.date;s.endMilestone='';}}
+  next[list]=next[list].filter(x=>x.id!==id);commit(next,'Eintrag gelöscht');if($('editor').open)$('editor').close();
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.close)$(b.dataset.close).close();
+  if(b.dataset.add)openEditor(b.dataset.add);
+  if(b.dataset.edit)openEditor(b.dataset.edit,b.dataset.id);
+  if(b.dataset.delete)deleteEntry(b.dataset.delete,b.dataset.id);
+  if(b.dataset.tab){view.tab=b.dataset.tab;renderTable();}
+  if(b.dataset.scale){view.scale=b.dataset.scale;saveView();renderChart();}
+  if(b.id==='addSecurityBtn'){
+    readSecurityDrafts();const start=$('f-date').value||M.today();editing.securities.push({id:M.uid(),name:'Anzahlungsbürgschaft',kind:'advance',value:0,unit:'percent',start,startMilestone:editing.id,end:M.iso(Math.min(M.day(start)+365,M.day('2100-12-31'))),endMilestone:'',description:''});renderSecurityEditors();$('securityEditors').lastElementChild?.scrollIntoView({block:'center'});
+  }
+  if(b.dataset.securityRemove!==undefined){readSecurityDrafts();editing.securities.splice(Number(b.dataset.securityRemove),1);renderSecurityEditors();}
+  if(b.dataset.months){const start=$('f-date').value;if(!M.validDate(start))return;const d=new Date(start+'T00:00:00Z'),desired=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+Number(b.dataset.months));const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(desired,last));const end=d.toISOString().slice(0,10);if(!M.validDate(end)){toast('Das Laufzeitende muss spätestens im Jahr 2100 liegen.');return;}const prefix='f-s'+b.dataset.securityIndex;$(prefix+'endMilestone').value='';$(prefix+'end').disabled=false;$(prefix+'end').value=end;}
+  if(b.dataset.new){$('newDialog').close();if(p.milestones.length||p.securities.length||p.phases.length){if(!await ask('Aktuellen Plan ersetzen?','Speichere den aktuellen Plan bei Bedarf vorher als Datei. Du kannst den Wechsel auch rückgängig machen.','Neuen Plan starten'))return;}commit(b.dataset.new==='example'?M.example():M.blank(),'Neuer Plan geöffnet',true);if(b.dataset.new==='blank')openEditor('project');}
+});
+$('deleteEntryBtn').onclick=()=>deleteEntry(editing.type,editing.id);
+function saveProjectTitle(){
+  const title=$('projectTitle').value.trim();
+  if(title&&title!==p.title){const next=M.copy(p);next.title=title;commit(next);}
+  else $('projectTitle').value=p.title;
+  fitProjectTitle();
+}
+$('projectTitle').oninput=fitProjectTitle;
+$('projectTitle').onchange=saveProjectTitle;
+$('projectTitle').onkeydown=e=>{
+  if(e.key==='Enter'){e.preventDefault();saveProjectTitle();e.currentTarget.blur();}
+  if(e.key==='Escape'){e.preventDefault();e.currentTarget.value=p.title;fitProjectTitle();e.currentTarget.blur();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveProjectTitle();saveFile();}
+};
+$('projectBtn').onclick=()=>openEditor('project');$('addRecordBtn').onclick=()=>openEditor({milestones:'milestone',phases:'phase'}[view.tab]);
+$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;$('newBtn').onclick=()=>$('newDialog').showModal();
+$('labelsBtn').onclick=()=>{view.labels=!view.labels;saveView();renderChart();};
+
+function filename(ext){return (p.title.normalize('NFKC').replace(/[<>:"/\\|?*\u0000-\u001f]/g,'-').slice(0,100)||'Zahlungsplan')+'.'+ext;}
+function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+// Dateiname: JJJJMMTT_Projekttitel.html (Leerzeichen -> Unterstriche)
+function saveName(){
+  const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  let t=(p.title||'zahlungsplan').trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df_.\-]+/g,'_').replace(/_+/g,'_').replace(/^[_.]+|[_.]+$/g,'');
+  if(!t)t='zahlungsplan';if(t.toLowerCase().endsWith('.html'))t=t.slice(0,-5);
+  return ymd+'_'+t+'.html';
+}
+// Ganze Applikation in einer einzigen HTML-Datei bauen:
+// - frisches HTML vom Server holen (kein gerenderter Zwischenzustand)
+// - lib-Skripte inline einbetten (offline lauffähig, kein Ordner mit lib/ nötig)
+// - aktuellen Plan in <script id="embedded-project"> einbetten
+async function buildStandaloneHTML(){
+  const json=JSON.stringify(p,null,2);let html=null;
+  try{const res=await fetch(location.href,{cache:'no-store'});if(res.ok)html=await res.text();}catch{}
+  if(!html||!html.includes('<script')){
+    // Fallback (z. B. bei file://): aktuelles Dokument ohne geöffnete Dialoge übernehmen.
+    const doc=document.documentElement.cloneNode(true);
+    doc.querySelectorAll('dialog[open]').forEach(d=>d.removeAttribute('open'));
+    const t=doc.querySelector('#toast');if(t)t.hidden=true;
+    html='<!DOCTYPE html>\n'+doc.outerHTML;
+  }
+  async function inlineLib(path){
+    try{
+      const r=await fetch(path,{cache:'no-store'});if(!r.ok)return;
+      const code=(await r.text()).replace(/<\/script/gi,'<\\/script');
+      const re=new RegExp('<script[^>]*src=["\']'+path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'["\'][^>]*>\\s*<\/script>','i');
+      html=html.replace(re,()=>'<script>\n'+code+'\n<\/script>');
+    }catch{}
+  }
+  await inlineLib('lib/lucide.min.js');
+  const tag='<script id="embedded-project" type="application/json">'+json.replace(/<\/script/gi,'<\\/script')+'<\/script>';
+  const embeddedRe=/<script[^>]*id=["']embedded-project["'][^>]*>[\s\S]*?<\/script>/i;
+  if(embeddedRe.test(html))html=html.replace(embeddedRe,()=>tag);
+  else html=html.replace(/<script(\s[^>]*)?type=["']module["']/i,()=>tag+'\n<script$1type="module"');
+  return html;
+}
+async function saveFile(){
+  let html;
+  try{html=await buildStandaloneHTML();}catch(err){console.error(err);toast('HTML-Export fehlgeschlagen.');return;}
+  const name=saveName(),done=()=>toast('Zahlungsplan als HTML-Datei gespeichert');
+  // Speichern-Dialog direkt öffnen, Dateiname ist vorgegeben (Ordner + Name in einem)
+  try{
+    if(window.showSaveFilePicker){
+      const fh=await window.showSaveFilePicker({suggestedName:name,types:[{description:'HTML-Datei',accept:{'text/html':['.html']}}]});
+      const w=await fh.createWritable();await w.write(html);await w.close();done();return;
+    }
+  }catch(err){if(err?.name==='AbortError')return;console.warn('Speichern-Dialog fehlgeschlagen, Fallback Download:',err);}
+  download(new Blob([html],{type:'text/html'}),name);done();
+}
+$('saveBtn').onclick=saveFile;$('loadBtn').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=async e=>{
+  const file=e.target.files[0];e.target.value='';if(!file)return;
+  try{
+    if(file.size>5*1024*1024)throw Error('Die Datei ist zu gross (maximal 5 MB).');
+    const source=await file.text();let raw;
+    if(source.trimStart().startsWith('<')){
+      // Extract only the inert project JSON; imported HTML or scripts are never executed.
+      const match=source.match(/<script\b[^>]*\bid=["']embedded-project["'][^>]*>([\s\S]*?)<\/script>/i);
+      if(!match)throw Error('Die HTML-Datei enthält keinen gespeicherten Zahlungsplan und kein Gantt-Projekt.');raw=JSON.parse(match[1]);
+    }else raw=JSON.parse(source);
+    const gantt=!raw.format&&!raw.milestones&&Array.isArray(raw.phases),loaded=gantt?M.fromGantt(raw):M.normalize(raw);
+    if(!await ask('Datei öffnen?',`„${loaded.title}“ ersetzt den aktuellen Plan.${gantt?' Gantt-Meilensteine und Phasen werden übernommen. Die Teilzahlungen kannst du anschliessend ergänzen.':' Speichere den bisherigen Plan bei Bedarf vorher als Datei.'}`,'Öffnen'))return;
+    commit(loaded,gantt?'Gantt-Meilensteine und Projektphasen importiert':'Zahlungsplan geladen',true);
+  }catch(err){toast(err instanceof SyntaxError?'Die Datei enthält keine gültigen Planungsdaten.':err.message);}
+};
+
+// Dragging a linked edge changes its milestone so the relationship stays intact.
+function moveMilestone(project,id,date,moveEnd=true){const m=project.milestones.find(m=>m.id===id);if(!m)return;const delta=M.day(date)-M.day(m.date);if(m.securityEnd&&moveEnd)m.securityEnd=M.iso(Math.min(M.day('2100-12-31'),M.day(m.securityEnd)+delta));m.date=date;}
+$('chart').addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;const g=e.target.closest('[data-type][data-id]');if(!g)return;
+  const type=g.dataset.type,id=g.dataset.id,edge=e.target.dataset.edge;
+  const list={milestone:'milestones',security:'securities',phase:'phases'}[type],item=p[list]?.find(s=>s.id===id);if(!item)return;
+  const date=type==='milestone'?(edge==='end'?(item.securityEnd||item.date):item.date):M.resolveDate(item,edge||'start',p);
+  e.preventDefault();const bounds=$('chart').querySelector('svg').getBoundingClientRect();
+  drag={type,id,edge,startX:e.clientX,startY:e.clientY,date,original:M.copy(p),next:M.copy(p),geometry:{...chartGeometry},ratio:chartGeometry.width/bounds.width,moved:false,pointer:e.pointerId};
+});
+window.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.pointer)return;const dx=e.clientX-drag.startX;if(Math.abs(dx)<4&&!drag.moved)return;
+  drag.moved=true;e.preventDefault();const {geometry:g}=drag,delta=Math.round(dx*drag.ratio/g.plotW*(g.end-g.start));
+  const limited=n=>M.iso(Math.max(M.day('2000-01-01'),Math.min(M.day('2100-12-31'),n)));
+  let date=limited(M.day(drag.date)+delta);
+  const next=M.copy(drag.original),item=next[{milestone:'milestones',security:'securities',phase:'phases'}[drag.type]].find(s=>s.id===drag.id);
+  if(drag.type==='milestone'){
+    if(drag.edge==='end')item.securityEnd=date<item.date?item.date:date;
+    else if(drag.edge==='start'){if(date>(item.securityEnd||item.date))date=item.securityEnd||item.date;moveMilestone(next,item.id,date,false);}
+    else moveMilestone(next,item.id,date);
+  }else if(drag.edge){
+    const other=M.resolveDate(item,drag.edge==='end'?'start':'end',next);if(drag.edge==='end'&&date<other)date=other;if(drag.edge==='start'&&date>other)date=other;
+    if(drag.type==='security'&&item[drag.edge+'Milestone'])moveMilestone(next,item[drag.edge+'Milestone'],date);
+    else item[drag.edge]=date;
+  }else{
+    const start=M.resolveDate(item,'start',next),end=M.resolveDate(item,'end',next),shift=Math.max(M.day('2000-01-01')-M.day(start),Math.min(M.day('2100-12-31')-M.day(end),delta));
+    if(drag.type==='phase'){item.start=limited(M.day(start)+shift);item.end=limited(M.day(end)+shift);}
+    else{const moved=new Set();for(const edge of ['start','end']){const id=item[edge+'Milestone'];if(id){if(!moved.has(id)){moveMilestone(next,id,limited(M.day(M.resolveDate(item,edge,drag.original))+shift));moved.add(id);}}else item[edge]=limited(M.day(item[edge])+shift);}}
+  }
+  drag.next=next;const range=domain(next,view.scale);renderChart(next,{start:Math.min(g.start,range.start),end:Math.max(g.end,range.end)});$('saveStatus').textContent='Termin: '+M.dateLabel(date);
+},{passive:false});
+window.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.pointer)return;const current=drag;drag=null;if(current.moved){ignoreClickUntil=performance.now()+350;commit(current.next,'Termin aktualisiert');}});
+function cancelDrag(){if(!drag)return;drag=null;render();$('saveStatus').textContent='Verschieben abgebrochen';}
+window.addEventListener('pointercancel',cancelDrag);window.addEventListener('blur',cancelDrag);
+$('chart').addEventListener('click',e=>{if(performance.now()<ignoreClickUntil)return;const g=e.target.closest('[data-type][data-id]');if(g)openEditor(g.dataset.type,g.dataset.id);});
+$('chart').addEventListener('keydown',e=>{
+  const g=e.target.closest('[data-type][data-id]');if(!g)return;
+  if(['Enter',' '].includes(e.key)){e.preventDefault();openEditor(g.dataset.type,g.dataset.id);}
+  if(g.dataset.type==='milestone'&&['ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();const next=M.copy(p),m=next.milestones.find(m=>m.id===g.dataset.id),delta=(e.key==='ArrowRight'?1:-1)*(e.shiftKey?7:1);const date=M.iso(M.day(m.date)+delta);if(!M.validDate(date))return;moveMilestone(next,m.id,date);commit(next);$('chart').querySelector(`[data-id="${CSS.escape(m.id)}"]`)?.focus();
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&drag){e.preventDefault();cancelDrag();return;}
+  if(e.target.closest('input,textarea,select,dialog'))return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveFile();}
+  if(e.target.matches('[role=tab]')&&['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const tabs=[...document.querySelectorAll('[data-tab]')],i=tabs.indexOf(e.target),next=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];view.tab=next.dataset.tab;renderTable();next.focus();}
+});
+
+const exportCfg={withList:true,width:1100,height:620,scale:1},exportStage=$('exportStage'),exportFrame=$('exportFrame');
+let exportRevision=0,exportTimer,exportDrag=null,printing=false;
+const minExportWidth=()=>exportCfg.withList?780:520;
+const clampExportWidth=width=>Math.max(minExportWidth(),Math.min(4000,Math.round(Number(width)||1100)));
+function fitExportFrame(){
+  exportCfg.scale=Math.min(1,Math.max(1,exportStage.clientWidth-58)/exportCfg.width,Math.max(1,exportStage.clientHeight-34)/exportCfg.height);
+  exportFrame.style.width=Math.round(exportCfg.width*exportCfg.scale)+'px';exportFrame.style.height=Math.round(exportCfg.height*exportCfg.scale)+'px';
+  $('exportWidth').value=exportCfg.width;$('exportWidth').min=minExportWidth();$('exportResize').setAttribute('aria-valuemin',minExportWidth());$('exportResize').setAttribute('aria-valuenow',exportCfg.width);
+}
+function queueExport(delay=70){clearTimeout(exportTimer);exportTimer=setTimeout(renderExport,delay);}
+async function renderExport(){
+  if(!$('exportDialog').open)return;
+  const revision=++exportRevision,project=M.copy(p),cfg={...exportCfg,scale:view.scale},data=report(project,view.labels,cfg),url=URL.createObjectURL(new Blob([data.markup],{type:'image/svg+xml;charset=utf-8'}));
+  for(const id of ['pngBtn','svgBtn','printBtn'])$(id).disabled=true;
+  $('exportStatus').textContent='Vorschau wird erstellt …';
+  try{
+    const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Die Vorschau konnte nicht erstellt werden.'));img.src=url;});
+    if(revision!==exportRevision||!$('exportDialog').open){URL.revokeObjectURL(url);return;}
+    const old=exportData?.url;exportData={...data,url,project,labels:view.labels,withList:cfg.withList,scale:cfg.scale};exportCfg.height=data.height;
+    $('exportPreview').src=url;fitExportFrame();if(old)URL.revokeObjectURL(old);
+    $('exportStatus').textContent=`${data.width} × ${data.height} px · Breite am rechten Griff ziehen`;
+    for(const id of ['pngBtn','svgBtn','printBtn'])$(id).disabled=false;
+  }catch(err){URL.revokeObjectURL(url);if(revision===exportRevision)$('exportStatus').textContent=err.message;}
+}
+function openExport(print=false){
+  $('exportTitle').textContent=print?'Druckvorschau':'PNG Vorschau';$('printBtn').classList.toggle('primary',print);$('pngBtn').classList.toggle('primary',!print);
+  exportCfg.width=clampExportWidth(exportCfg.width);$('exportDialog').showModal();fitExportFrame();renderExport();
+}
+$('exportBtn').onclick=()=>openExport();$('printOpenBtn').onclick=()=>openExport(true);
+$('exportMode').onclick=e=>{const button=e.target.closest('[data-list]');if(!button)return;exportCfg.withList=button.dataset.list==='1';exportCfg.width=clampExportWidth(exportCfg.width);for(const b of $('exportMode').querySelectorAll('button')){const on=(b.dataset.list==='1')===exportCfg.withList;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);}fitExportFrame();queueExport();};
+$('exportWidth').onchange=()=>{exportCfg.width=clampExportWidth($('exportWidth').value);fitExportFrame();queueExport();};
+$('exportResize').onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();exportCfg.width=clampExportWidth(e.key==='Home'?minExportWidth():e.key==='End'?4000:exportCfg.width+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?200:50));fitExportFrame();queueExport();};
+$('exportResize').onpointerdown=e=>{
+  if(e.button!==0)return;e.preventDefault();const start={x:e.clientX,width:exportCfg.width,scale:exportCfg.scale,pointer:e.pointerId};exportDrag={...start,next:start.width};$('exportResize').setPointerCapture(e.pointerId);
+  const guide=$('exportGuide');guide.hidden=false;guide.style.left=exportFrame.offsetLeft+'px';guide.style.top=exportFrame.offsetTop+'px';guide.style.width=exportFrame.offsetWidth+'px';guide.style.height=exportFrame.offsetHeight+'px';
+};
+window.addEventListener('pointermove',e=>{if(!exportDrag||e.pointerId!==exportDrag.pointer)return;exportDrag.next=clampExportWidth(exportDrag.width+(e.clientX-exportDrag.x)/exportDrag.scale);$('exportGuide').style.width=Math.min(exportStage.clientWidth-40,exportDrag.next*exportDrag.scale)+'px';$('exportWidth').value=exportDrag.next;});
+function finishExportResize(e){if(!exportDrag||e.pointerId!==exportDrag.pointer)return;exportCfg.width=e.type==='pointercancel'?exportDrag.width:exportDrag.next;exportDrag=null;$('exportGuide').hidden=true;fitExportFrame();queueExport(0);}
+window.addEventListener('pointerup',finishExportResize);window.addEventListener('pointercancel',finishExportResize);
+$('exportDialog').addEventListener('close',()=>{exportRevision++;clearTimeout(exportTimer);exportDrag=null;$('exportGuide').hidden=true;});
+new ResizeObserver(()=>{if($('exportDialog').open&&!exportDrag)fitExportFrame();}).observe(exportStage);
+$('svgBtn').onclick=()=>{if(exportData)download(new Blob([exportData.markup],{type:'image/svg+xml'}),filename('svg'));};
+$('pngBtn').onclick=async()=>{
+  if(!exportData)return;const data=exportData;$('pngBtn').disabled=true;
+  try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=data.url;});const scale=Math.min(2,16000/data.width,16000/data.height,Math.sqrt(60000000/(data.width*data.height))),canvas=document.createElement('canvas');canvas.width=Math.round(data.width*scale);canvas.height=Math.round(data.height*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!png)throw Error('PNG konnte nicht erstellt werden.');download(png,filename('png'));}
+  catch{$('exportStatus').textContent='PNG konnte nicht erstellt werden. Bitte erneut versuchen.';}finally{$('pngBtn').disabled=false;}
+};
+function preparePrint(data){
+  let holder=$('printReport');if(!holder){holder=document.createElement('div');holder.id='printReport';holder.hidden=true;document.body.append(holder);}
+  let style=$('printPageStyle');if(!style){style=document.createElement('style');style.id='printPageStyle';document.head.append(style);}
+  const landscape=data.width>=data.height,pageW=landscape?400:277,pageH=landscape?276:399,factor=Math.min(pageW/data.width,pageH/data.height);
+  style.textContent=`@page{size:A3 ${landscape?'landscape':'portrait'};margin:10mm}@media print{#printReport>svg{width:${data.width*factor}mm;height:${data.height*factor}mm;max-width:100%;display:block;margin:auto}}`;
+  holder.innerHTML=data.markup;
+}
+function printReport(){if(!exportData)return;preparePrint(exportData);printing=true;$('exportDialog').close();try{window.print();}finally{printing=false;}}
+$('printBtn').onclick=printReport;
+window.addEventListener('beforeprint',()=>{if(!printing)preparePrint($('exportDialog').open&&exportData?exportData:report(p,view.labels,{...exportCfg,scale:view.scale}));});
+let resizeTimer,lastWidth=0;new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(Math.abs(width-lastWidth)<1)return;lastWidth=width;clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!drag)renderChart();},100);}).observe($('chartScroll'));
+render();document.addEventListener('DOMContentLoaded',icons,{once:true});
+if(fromEmbedded)persist();
+if(migrationRaw){try{if(!localStorage.getItem(KEY+':before-merge'))localStorage.setItem(KEY+':before-merge',migrationRaw);persist();toast('Bestehende Sicherheiten wurden an Meilensteine gekoppelt. Bisherige Werte und Termine bleiben erhalten.');}catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Die Sicherheiten wurden im geöffneten Plan zugeordnet. Bitte sichere den Plan als Datei; der Browser konnte ihn nicht speichern.';}}
+
+if(renamedExample&&!migrationRaw)persist();
+</script>
 </body>
 </html>
