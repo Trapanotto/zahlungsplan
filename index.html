@@ -302,7 +302,7 @@ function domain(p,scale='month') {
 }
 function timeline(p,options={}) {
   const scale=options.scale||'month',labels=options.labels!==false,prefix=options.prefix||'live';
-  const {start,end}=options.domain||domain(p,scale),left=192,right=24,header=53;
+  const {start,end}=options.domain||domain(p,scale),left=250,right=24,header=53;
   const firstDate=new Date(start*86400000),lastDate=new Date((end-1)*86400000);
   const width=Math.max(360,options.width||1300);
   const plotW=width-left-right,x=d=>left+(d-start)/(end-start)*plotW,datedX=date=>x(day(date));
@@ -416,13 +416,12 @@ function timeline(p,options={}) {
   // Sidebar backgrounds are painted after the grid, keeping section labels readable.
   content+=rect(0,0,left,height,'fill="#fff"');
   content+=rect(0,0,left,header,'fill="#f5f6fa"');
-  content+=text(18,24,'ZEITRAUM','font-size="10" font-weight="700" letter-spacing="1" fill="#66728a"');
+  content+=text(18,24,'ZEITRAUM','font-size="11" font-weight="700" letter-spacing="1" fill="#66728a"');
   const rangeLabel=firstDate.getUTCFullYear()===lastDate.getUTCFullYear()?String(firstDate.getUTCFullYear()):firstDate.getUTCFullYear()+' – '+lastDate.getUTCFullYear();
-  content+=text(18,42,rangeLabel,'font-size="12" font-weight="600" fill="#4a566f"');
+  content+=text(18,43,rangeLabel,'font-size="14" font-weight="600" fill="#4a566f"');
   content+=line(left,0,left,height,'stroke="#d9dfeb"');
   for(const border of [header,securityY,warrantyY,vspY,payY,height-1])content+=line(0,border,width,border,'stroke="#e5e9f1"');
-  content+=text(18,phaseY+26,'Projektphasen','font-size="12" font-weight="650" fill="#526077"');
-  content+=text(18,phaseY+41,p.phases.length+' Phasen','font-size="10" fill="#6b7489"');
+  content+=text(18,phaseY+phaseHeight/2+5,'Projektphasen','font-size="15" font-weight="650" fill="#3d4860"');
   if(!p.phases.length)content+=text(left+15,phaseY+29,'Noch keine Projektphasen','font-size="11" fill="#6b7489"');
   let clip=0;
   for(const {phase:s,slot} of phaseLayout){
@@ -439,7 +438,7 @@ function timeline(p,options={}) {
     if(w>32)bar+=text(a+8,rowY+22,cut(label,Math.max(3,Math.floor((w-12)/5.6))),`font-size="11" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550" clip-path="url(#${cid})"`);
     else{const after=width-right-(a+w+8),before=a-left-8,useRight=after>=before,space=useRight?after:before;bar+=text(useRight?a+w+8:a-8,rowY+22,cut(label,Math.max(3,Math.floor(space/6))),`font-size="11" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550"${useRight?'':' text-anchor="end"'}`);}
     for(const [edge,dx] of [['start',a],['end',a+w]])bar+=rect(dx-5,rowY+1,10,34,`fill="transparent" data-edge="${edge}" class="resize-handle"`);
-    if(warranty){content+=text(18,rowY+17,'Gewährleistung','font-size="12" font-weight="650" fill="#526077"');content+=text(18,rowY+30,cut(s.name,28),'font-size="10" fill="#6b7489"');}
+    if(warranty){content+=text(18,rowY+23,'Gewährleistung','font-size="15" font-weight="650" fill="#3d4860"');}
     content+=editable(milestone?'milestone':'security',s.id,title,bar,true);
   };
   for(let i=1;i<securityRows.length;i++)content+=line(left,securityY+5+i*36,width-right,securityY+5+i*36,'stroke="#e5e9f1"');
@@ -447,22 +446,21 @@ function timeline(p,options={}) {
     const rowY=securityY+5+i*36;
     securityRow(m,rowY,type==='milestone');
   });
-  if(securityRows.length){content+=text(18,securityY+(warrantyY-securityY)/2-2,'Sicherheiten','font-size="12" font-weight="650" fill="#526077"');content+=text(18,securityY+(warrantyY-securityY)/2+13,'Bürgschaft / Garantie / Termine','font-size="10" fill="#6b7489"');}
-  if(!securityRows.length){content+=text(18,securityY+26,'Sicherheiten','font-size="12" font-weight="650" fill="#526077"');content+=text(left+15,securityY+28,'Noch keine Sicherheiten','font-size="11" fill="#6b7489"');}
+  if(securityRows.length){content+=text(18,securityY+(warrantyY-securityY)/2+5,'Sicherheiten','font-size="15" font-weight="650" fill="#3d4860"');}
+  if(!securityRows.length){content+=text(18,securityY+29,'Sicherheiten','font-size="15" font-weight="650" fill="#3d4860"');content+=text(left+15,securityY+28,'Noch keine Sicherheiten','font-size="11" fill="#6b7489"');}
   warranties.forEach((s,i)=>securityRow(s,warrantyY+5+i*36));
-  content+=text(18,vspY+24,'Verzugsschadenspauschale','font-size="11" font-weight="650" fill="#526077"');
-  content+=text(18,vspY+38,'VSP-Termine','font-size="10" fill="#6b7489"');
+  content+=text(18,vspY+27,'Verzugsschadenspauschale','font-size="15" font-weight="650" fill="#3d4860"');
   for(const {m,slot} of vspLayout){const mx=datedX(m.date),my=vspY+22+slot*30,label=cut(m.name,34),flip=mx+13+label.length*6>width-right;content+=editable('milestone',m.id,`${m.name} · VSP · ${dateLabel(m.date)}${m.vspNote?' · '+m.vspNote:''}`,diamond(mx,my,7,'fill="#df4662" stroke="#fff" stroke-width="2" class="focus-shape"')+rect(mx-12,my-12,24,24,'fill="transparent"')+text(mx+(flip?-13:13),my+4,label,`font-size="11" font-weight="600" fill="#b84f63"${flip?' text-anchor="end"':''}`),true);}
   if(!vspMs.length)content+=text(left+15,vspY+27,'Keine VSP-Termine erfasst','font-size="11" fill="#6b7489"');
   const axisLeft=left-101,axisWidth=87,axisCenter=axisLeft+axisWidth/2,axisY=(payTop+payBottom)/2-10,gradient=prefix+'-payment-axis';
   defs+=`<linearGradient id="${gradient}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eea33c"/><stop offset="1" stop-color="#fff0cf"/></linearGradient>`;
-  content+=text(47,axisY,'Zahlungsverlauf (in %)',`text-anchor="middle" font-size="12" font-weight="650" fill="#526077" transform="rotate(-90 47 ${f(axisY)})"`);
+  content+=text(60,axisY,'Zahlungsverlauf (in %)',`text-anchor="middle" font-size="15" font-weight="650" fill="#3d4860" transform="rotate(-90 60 ${f(axisY)})"`);
   for(let pct=0;pct<=maxY;pct+=maxY>150?Math.ceil(maxY/100)*10:10){
     const ay=py(pct)-10,barWidth=axisWidth*pct/maxY;
     content+=line(left,py(pct),width-right,py(pct),`stroke="${pct===100?'#e1c5a4':'#e8ecf3'}"${pct===100?' stroke-dasharray="4 4"':''}`);
     content+=line(axisLeft-3,ay+10,left-4,ay+10,'stroke="#edf0f5"');
     if(pct>0)content+=rect(axisLeft,ay-9,barWidth,18,`rx="1" fill="url(#${gradient})" stroke="#e9ba70" stroke-width=".5" data-axis-percent="${pct}"`);
-    content+=text(axisCenter,ay+4,number(pct)+' %','text-anchor="middle" font-size="11" font-weight="550" fill="#76531f"');
+    content+=text(axisCenter,ay+4,number(pct)+' %','text-anchor="middle" font-size="12" font-weight="550" fill="#76531f"');
   }
   let d=`M${left} ${payBottom}`;
   for(const m of positions)d+=` H${f(m.x)} V${f(m.y)}`;
