@@ -272,7 +272,7 @@ const rect=(x,y,w,h,attrs='')=>`<rect x="${f(x)}" y="${f(y)}" width="${f(Math.ma
 const diamond=(x,y,size,attrs='')=>`<path d="M${f(x)} ${f(y-size)}l${size} ${size}l-${size} ${size}l-${size} -${size}Z" ${attrs}/>`;
 const editable=(type,id,label,body,drag=false)=>`<g class="interactive${drag?' draggable':''}" data-type="${type}" data-id="${esc(id)}" role="button" tabindex="0" aria-label="${esc(label)}"><title>${esc(label)}</title>${body}</g>`;
 const labelContext=typeof document==='undefined'?null:document.createElement('canvas').getContext('2d');
-function labelWidth(value,bold=false){if(labelContext){labelContext.font=(bold?'700':'400')+' 11px "Segoe UI",Arial,sans-serif';return labelContext.measureText(value).width;}return [...value].reduce((sum,c)=>sum+(/[ilI.,:!\s]/.test(c)?2.8:/[MW@%]/.test(c)?8:5.5),0)*(bold?1.08:1);}
+function labelWidth(value,bold=false){if(labelContext){labelContext.font=(bold?'700':'400')+' 13px "Segoe UI",Arial,sans-serif';return labelContext.measureText(value).width;}return [...value].reduce((sum,c)=>sum+(/[ilI.,:!\s]/.test(c)?2.8:/[MW@%]/.test(c)?8:5.5),0)*(bold?1.08:1);}
 function paymentLines(value,width,prefix){
   const boldExtra=labelWidth(prefix,true)-labelWidth(prefix),available=()=>width-(out.length?0:boldExtra);
   const out=[];let current='';
@@ -319,7 +319,7 @@ function timeline(p,options={}) {
   const vspY=y,vspMs=p.milestones.filter(m=>m.vsp).sort((a,b)=>a.date.localeCompare(b.date));
   // VSP events on separate tracks when their labels would overlap.
   const vspSlots=[],vspLayout=[];
-  for(const m of vspMs){const px=datedX(m.date),bw=Math.min(245,m.name.length*6+26);let slot=vspSlots.findIndex(last=>last<px-8);if(slot<0)slot=vspSlots.length;vspSlots[slot]=px+bw;vspLayout.push({m,slot});}
+  for(const m of vspMs){const px=datedX(m.date),bw=Math.min(290,m.name.length*7+26);let slot=vspSlots.findIndex(last=>last<px-8);if(slot<0)slot=vspSlots.length;vspSlots[slot]=px+bw;vspLayout.push({m,slot});}
   y+=Math.max(1,vspSlots.length)*30+15;
   const payY=y,points=cumulative(p).filter(m=>m.value>0),payTop=y+38,payBottom=payTop+(labels?Math.max(210,Math.min(400,points.length*46)):210);
   const total=points.at(-1)?.cumulative||0,maxY=Math.max(100,Math.ceil(total/10)*10),py=value=>payBottom-value/maxY*(payBottom-payTop);
@@ -330,50 +330,40 @@ function timeline(p,options={}) {
   const curveObstacles=segments.map(s=>({x1:Math.min(s.x1,s.x2)-4,y1:Math.min(s.y1,s.y2)-4,x2:Math.max(s.x1,s.x2)+4,y2:Math.max(s.y1,s.y2)+4}));
   const placed=[];
   if(labels){
-    // Keep complete labels to the right below each corner. Stack crowded cards downwards.
-    for(const m of positions){
-      const prefix=percentLabel(m.percent),label=prefix+' '+m.name,maxWidth=Math.min(238,plotW-16,Math.max(112,labelWidth(label)+labelWidth(prefix,true)-labelWidth(prefix)+20));
-      const minWidth=Math.min(maxWidth,Math.max(112,...label.split(/\s+/).map(word=>labelWidth(word)+20)));
-      const cardObstacles=placed.map(b=>({x1:b.x-8,y1:b.y-8,x2:b.x+b.w+8,y2:b.y+b.h+8}));
-      const obstacles=[...curveObstacles,...cardObstacles];
+    // Each card hangs below the tread that follows its payment step, linked by a short vertical leader.
+    // Crowded cards move along the tread or further down, never across another card.
+    // Place from the last step backwards: later steps sit closer together and need the room under their short treads.
+    for(let index=positions.length-1;index>=0;index--){
+      const m=positions[index];
+      const prefix=percentLabel(m.percent),label=prefix+' '+m.name,maxWidth=Math.min(320,plotW-16,Math.max(130,labelWidth(label)+labelWidth(prefix,true)-labelWidth(prefix)+20));
+      const minWidth=Math.min(maxWidth,Math.max(130,...label.split(/\s+/).map(word=>labelWidth(word)+20)));
+      const cards=placed.map(b=>({x1:b.x-8,y1:b.y-8,x2:b.x+b.w+8,y2:b.y+b.h+8}));
+      const obstacles=[...curveObstacles,...cards];
+      const treadEnd=index<positions.length-1?positions[index+1].x:width-right,lo=m.x+8,hi=Math.max(lo,treadEnd-8);
+      const anchors=[...new Set([lo,Math.min(hi,lo+40),(lo+hi)/2,hi].map(Math.round))];
+      const widths=[maxWidth,210].map(w=>Math.max(minWidth,Math.min(maxWidth,w)));
       let best;
-      const widths=[maxWidth,170].map(w=>Math.max(minWidth,Math.min(maxWidth,w)));
       for(const bw of new Set(widths)){
-        const lines=paymentLines(label,bw-20,prefix),bh=lines.length*15+12;
-        const candidates=[m.x+12,m.x+40,m.x+80,...(positions.length<80?[m.x+140,m.x+220,...placed.filter(b=>b.x+b.w>m.x&&b.x+b.w<m.x+350).map(b=>b.x+b.w+8)]:[])].map(px=>Math.min(width-right-bw-8,Math.max(left+8,px)));
-        for(const bx of new Set(candidates)){
+        const lines=paymentLines(label,bw-20,prefix),bh=lines.length*17+12;
+        for(const ax of anchors)for(const wanted of [ax-14,ax-bw/2,ax-bw+14]){
+          const bx=Math.min(width-right-bw-4,Math.max(left+4,wanted));
+          if(ax<bx+8||ax>bx+bw-8)continue;
           let by=m.y+10;
           for(let attempt=0;attempt<=obstacles.length;attempt++){
             const hits=obstacles.filter(o=>bx<o.x2&&bx+bw>o.x1&&by<o.y2&&by+bh>o.y1);
             if(!hits.length)break;
             by=Math.max(...hits.map(o=>o.y2));
           }
-          const anchorX=Math.max(bx+9,Math.min(bx+bw-9,m.x)),from={x:m.x+5,y:m.y+5},to={x:anchorX,y:by};
-          const crossings=obstacles.filter(o=>segmentHits(from,to,o)).length,displaced=by>m.y+10.1||Math.abs(bx-m.x-12)>.1;
-          const score=(by-m.y-10)*1.5+Math.abs(bx-m.x-12)*.6+crossings*10+(maxWidth-bw)*.06;
-          if(!best||score<best.score)best={x:bx,y:by,w:bw,h:bh,label,prefix,lines,anchorX,score,displaced};
+          const score=(by-m.y-10)*1.5+Math.abs(bx-(ax-14))*.4+(ax-lo)*.3+(maxWidth-bw)*.06;
+          const candidate={x:bx,y:by,w:bw,h:bh,label,prefix,lines,anchorX:ax,score};
+          const crossed=placed.filter(b=>ax>b.x-3&&ax<b.x+b.w+3&&b.y<by&&b.y+b.h>m.y).length;
+          candidate.score+=crossed*1000;
+          if(!best||candidate.score<best.score)best=candidate;
         }
       }
+      if(best.y-m.y>14)best.connector=[{x:best.anchorX,y:m.y},{x:best.anchorX,y:best.y}];
       m.labelBox=best;placed.push(best);
     }
-  }
-  // Route displaced callouts around the other cards, keeping every full name readable.
-  for(const m of positions)if(m.labelBox?.displaced){
-    const box=m.labelBox,from={x:m.x+2,y:m.y+2};
-    const cards=placed.filter(b=>b!==box).map(b=>({x1:b.x-1,y1:b.y-1,x2:b.x+b.w+1,y2:b.y+b.h+1}));
-    const curves=segments.map(s=>({x1:Math.min(s.x1,s.x2)-1.25,y1:Math.min(s.y1,s.y2)-1.25,x2:Math.max(s.x1,s.x2)+1.25,y2:Math.max(s.y1,s.y2)+1.25})).filter(r=>!(from.x>r.x1&&from.x<r.x2&&from.y>r.y1&&from.y<r.y2));
-    const cardObstacles=[...cards,{x1:box.x+.01,y1:box.y+.01,x2:box.x+box.w-.01,y2:box.y+box.h-.01}],routes=[];
-    const ends=[{x:box.anchorX,y:box.y},...[box.x,box.x+box.w].flatMap(x=>[{x,y:box.y+9},{x,y:box.y+box.h/2},{x,y:box.y+box.h-9}])];
-    const routesAt=[left+3,width-right-3,...cards.flatMap(r=>[r.x1-4,r.x2+4])];
-    const rowsAt=cards.filter(r=>r.x2>Math.min(from.x,box.x)-10&&r.x1<box.x+box.w+10).flatMap(r=>[r.y1-4,r.y2+4]);
-    for(const to of ends){
-      routes.push([from,to],[from,{x:from.x,y:to.y},to],[from,{x:to.x,y:from.y},to]);
-      for(const rx of new Set(routesAt))if(rx>=left&&rx<=width-right)routes.push([from,{x:rx,y:from.y},{x:rx,y:to.y-4},{x:to.x,y:to.y-4},to]);
-      for(const ry of new Set(rowsAt))if(ry>=payY+4)routes.push([from,{x:from.x,y:ry},{x:to.x,y:ry},to]);
-    }
-    let best;
-    for(const route of routes){let length=0,hits=0,crossings=0;for(let i=1;i<route.length;i++){const a=route[i-1],b=route[i];length+=Math.hypot(a.x-b.x,a.y-b.y);hits+=cardObstacles.filter(r=>segmentHits(a,b,r)).length;crossings+=curves.filter(r=>segmentHits(a,b,r)).length;}const score=hits*100000+crossings*1000+length+(route.length-2)*8;if(!best||score<best.score)best={route,score};}
-    box.connector=[{x:m.x,y:m.y},...best.route];
   }
   const height=Math.max(payBottom+24,...placed.map(b=>b.y+b.h+23));
   let content='',defs='';
@@ -419,21 +409,21 @@ function timeline(p,options={}) {
   content+=line(left,0,left,height,'stroke="#d9dfeb"');
   for(const border of [header,securityY,warrantyY,vspY,payY,height-1])content+=line(0,border,width,border,'stroke="#e5e9f1"');
   content+=text(18,phaseY+phaseHeight/2+5,'Projektphasen','font-size="15" font-weight="650" fill="#3d4860"');
-  if(!p.phases.length)content+=text(left+15,phaseY+29,'Noch keine Projektphasen','font-size="11" fill="#6b7489"');
+  if(!p.phases.length)content+=text(left+15,phaseY+29,'Noch keine Projektphasen','font-size="13" fill="#6b7489"');
   let clip=0;
   for(const {phase:s,slot} of phaseLayout){
     const a=datedX(s.start),b=datedX(s.end)+plotW/(end-start),barY=phaseY+10+slot*34,w=Math.max(3,b-a),cid=prefix+'-phase-'+clip++;
     defs+=`<clipPath id="${cid}">${rect(a+3,barY,w-6,25,'rx="5"')}</clipPath>`;
     const grip=Math.min(10,w/2);
-    content+=editable('phase',s.id,`${s.name} · ${dateLabel(s.start)} – ${dateLabel(s.end)}`,rect(a,barY,w,25,'rx="5" fill="#e8e5fb" class="focus-shape"')+(w>32?text(a+8,barY+16,cut(s.name,Math.max(3,Math.floor((w-12)/5.7))),`font-size="11" font-weight="600" fill="#685ab3" clip-path="url(#${cid})"`):'')+rect(a,barY-4,grip,33,'fill="transparent" data-edge="start" class="resize-handle"')+rect(a+w-grip,barY-4,grip,33,'fill="transparent" data-edge="end" class="resize-handle"'),true);
+    content+=editable('phase',s.id,`${s.name} · ${dateLabel(s.start)} – ${dateLabel(s.end)}`,rect(a,barY,w,25,'rx="5" fill="#e8e5fb" class="focus-shape"')+(w>32?text(a+8,barY+17,cut(s.name,Math.max(3,Math.floor((w-12)/6.7))),`font-size="13" font-weight="600" fill="#685ab3" clip-path="url(#${cid})"`):'')+rect(a,barY-4,grip,33,'fill="transparent" data-edge="start" class="resize-handle"')+rect(a+w-grip,barY-4,grip,33,'fill="transparent" data-edge="end" class="resize-handle"'),true);
   }
   const securityRow=(s,rowY,milestone=false)=>{
     const aDate=milestone?s.date:resolveDate(s,'start',p),bDate=milestone?(s.securityEnd||s.date):resolveDate(s,'end',p),a=datedX(aDate),b=datedX(bDate)+plotW/(end-start),bad=bDate<aDate,w=Math.max(4,b-a),warranty=s.kind==='warranty',title=`${s.name}${warranty||milestone?'':' · '+(s.unit==='amount'?money(s.value,p.currency):percentLabel(s.value))} · ${dateLabel(aDate)} – ${dateLabel(bDate)}`,cid=prefix+'-security-'+clip++;
     defs+=`<clipPath id="${cid}">${rect(a+4,rowY+6,w-8,24,'rx="4"')}</clipPath>`;
     let bar=rect(a,rowY+6,w,24,`rx="4" fill="${bad?'#ffe1e6':warranty?'#d9e0eb':'#f8cf76'}" class="focus-shape"`);
     const label=(warranty||milestone?'':percentLabel(share(s,p))+' · ')+s.name;
-    if(w>32)bar+=text(a+8,rowY+22,cut(label,Math.max(3,Math.floor((w-12)/5.6))),`font-size="11" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550" clip-path="url(#${cid})"`);
-    else{const after=width-right-(a+w+8),before=a-left-8,useRight=after>=before,space=useRight?after:before;bar+=text(useRight?a+w+8:a-8,rowY+22,cut(label,Math.max(3,Math.floor(space/6))),`font-size="11" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550"${useRight?'':' text-anchor="end"'}`);}
+    if(w>32)bar+=text(a+8,rowY+22,cut(label,Math.max(3,Math.floor((w-12)/6.6))),`font-size="13" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550" clip-path="url(#${cid})"`);
+    else{const after=width-right-(a+w+8),before=a-left-8,useRight=after>=before,space=useRight?after:before;bar+=text(useRight?a+w+8:a-8,rowY+22,cut(label,Math.max(3,Math.floor(space/7))),`font-size="13" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550"${useRight?'':' text-anchor="end"'}`);}
     for(const [edge,dx] of [['start',a],['end',a+w]])bar+=rect(dx-5,rowY+1,10,34,`fill="transparent" data-edge="${edge}" class="resize-handle"`);
     if(warranty){content+=text(18,rowY+23,'Gewährleistung','font-size="15" font-weight="650" fill="#3d4860"');}
     content+=editable(milestone?'milestone':'security',s.id,title,bar,true);
@@ -444,11 +434,11 @@ function timeline(p,options={}) {
     securityRow(m,rowY,type==='milestone');
   });
   if(securityRows.length){content+=text(18,securityY+(warrantyY-securityY)/2+5,'Sicherheiten','font-size="15" font-weight="650" fill="#3d4860"');}
-  if(!securityRows.length){content+=text(18,securityY+29,'Sicherheiten','font-size="15" font-weight="650" fill="#3d4860"');content+=text(left+15,securityY+28,'Noch keine Sicherheiten','font-size="11" fill="#6b7489"');}
+  if(!securityRows.length){content+=text(18,securityY+29,'Sicherheiten','font-size="15" font-weight="650" fill="#3d4860"');content+=text(left+15,securityY+28,'Noch keine Sicherheiten','font-size="13" fill="#6b7489"');}
   warranties.forEach((s,i)=>securityRow(s,warrantyY+5+i*36));
   content+=text(18,vspY+27,'Verzugsschadenspauschale','font-size="15" font-weight="650" fill="#3d4860"');
-  for(const {m,slot} of vspLayout){const mx=datedX(m.date),my=vspY+22+slot*30,label=cut(m.name,34),flip=mx+13+label.length*6>width-right;content+=editable('milestone',m.id,`${m.name} · VSP · ${dateLabel(m.date)}${m.vspNote?' · '+m.vspNote:''}`,diamond(mx,my,7,'fill="#df4662" stroke="#fff" stroke-width="2" class="focus-shape"')+rect(mx-12,my-12,24,24,'fill="transparent"')+text(mx+(flip?-13:13),my+4,label,`font-size="11" font-weight="600" fill="#b84f63"${flip?' text-anchor="end"':''}`),true);}
-  if(!vspMs.length)content+=text(left+15,vspY+27,'Keine VSP-Termine erfasst','font-size="11" fill="#6b7489"');
+  for(const {m,slot} of vspLayout){const mx=datedX(m.date),my=vspY+22+slot*30,label=cut(m.name,40),flip=mx+13+label.length*7>width-right;content+=editable('milestone',m.id,`${m.name} · VSP · ${dateLabel(m.date)}${m.vspNote?' · '+m.vspNote:''}`,diamond(mx,my,7,'fill="#df4662" stroke="#fff" stroke-width="2" class="focus-shape"')+rect(mx-12,my-12,24,24,'fill="transparent"')+text(mx+(flip?-13:13),my+4,label,`font-size="13" font-weight="600" fill="#b84f63"${flip?' text-anchor="end"':''}`),true);}
+  if(!vspMs.length)content+=text(left+15,vspY+27,'Keine VSP-Termine erfasst','font-size="13" fill="#6b7489"');
   const axisLeft=left-92,axisWidth=80,axisCenter=axisLeft+axisWidth/2,axisY=(payTop+payBottom)/2-10,gradient=prefix+'-payment-axis';
   defs+=`<linearGradient id="${gradient}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eea33c"/><stop offset="1" stop-color="#fff0cf"/></linearGradient>`;
   content+=text(18,axisY+2,'Zahlungsverlauf','font-size="15" font-weight="650" fill="#3d4860"')+text(18,axisY+21,'kumuliert, in %','font-size="13" fill="#5d687d"');
@@ -464,7 +454,7 @@ function timeline(p,options={}) {
   d+=` H${f(width-right)}`;
   content+=`<path d="${d} V${payBottom} H${left}Z" fill="#efaa53" fill-opacity=".08"/>`;
   content+=`<path d="${d}" fill="none" stroke="#e88a36" stroke-width="2.5" stroke-linejoin="miter"/>`;
-  for(const m of positions)if(m.labelBox?.connector){const d=m.labelBox.connector.map((pt,i)=>(i?'L':'M')+f(pt.x)+' '+f(pt.y)).join(' ');content+=`<path d="${d}" fill="none" stroke="#c5a37b" stroke-width="1" class="payment-connector" pointer-events="none"/>`;}
+  for(const m of positions)if(m.labelBox?.connector){const d=m.labelBox.connector.map((pt,i)=>(i?'L':'M')+f(pt.x)+' '+f(pt.y)).join(' ');content+=`<path d="${d}" fill="none" stroke="#d9a46c" stroke-width="1.2" class="payment-connector" pointer-events="none"/><circle cx="${f(m.labelBox.connector[0].x)}" cy="${f(m.labelBox.connector[0].y)}" r="3" fill="#e88a36" pointer-events="none"/>`;}
   for(const [index,m] of positions.entries()){
     const previousY=index?positions[index-1].y:payBottom;
     const title=`${m.name} · ${dateLabel(m.date)} · ${percentLabel(m.percent)} · kumuliert ${percentLabel(m.cumulative)}`;
@@ -472,7 +462,7 @@ function timeline(p,options={}) {
     if(m.labelBox){
       const box=m.labelBox;
       body+=rect(box.x,box.y,box.w,box.h,'rx="5" fill="#fff8ed" stroke="#efd6b6" class="payment-label focus-shape"');
-      box.lines.forEach((label,i)=>{body+=i?text(box.x+10,box.y+17+i*15,label,'font-size="11" font-weight="400" fill="#975b24" class="payment-label-text"'):`<text x="${f(box.x+10)}" y="${f(box.y+17)}" font-size="11" font-weight="400" fill="#975b24" class="payment-label-text"><tspan font-weight="700">${esc(box.prefix)}</tspan><tspan>${esc(label.slice(box.prefix.length))}</tspan></text>`;});
+      box.lines.forEach((label,i)=>{body+=i?text(box.x+10,box.y+18+i*17,label,'font-size="13" font-weight="400" fill="#975b24" class="payment-label-text"'):`<text x="${f(box.x+10)}" y="${f(box.y+18)}" font-size="13" font-weight="400" fill="#975b24" class="payment-label-text"><tspan font-weight="700">${esc(box.prefix)}</tspan><tspan>${esc(label.slice(box.prefix.length))}</tspan></text>`;});
     }
     content+=editable('milestone',m.id,title,body,true);
   }
