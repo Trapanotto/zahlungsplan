@@ -330,7 +330,7 @@ function timeline(p,options={}) {
   const curveObstacles=segments.map(s=>({x1:Math.min(s.x1,s.x2)-4,y1:Math.min(s.y1,s.y2)-4,x2:Math.max(s.x1,s.x2)+4,y2:Math.max(s.y1,s.y2)+4}));
   const placed=[];
   if(labels){
-    // Each card hangs below the tread that follows its payment step, linked by a short vertical leader.
+    // Each card sits below the tread that follows its payment step, linked from the step corner to the card corner.
     // Crowded cards move along the tread or further down, never across another card.
     // Place from the last step backwards: later steps sit closer together and need the room under their short treads.
     for(let index=positions.length-1;index>=0;index--){
@@ -339,29 +339,28 @@ function timeline(p,options={}) {
       const minWidth=Math.min(maxWidth,Math.max(130,...label.split(/\s+/).map(word=>labelWidth(word)+20)));
       const cards=placed.map(b=>({x1:b.x-8,y1:b.y-8,x2:b.x+b.w+8,y2:b.y+b.h+8}));
       const obstacles=[...curveObstacles,...cards];
-      const treadEnd=index<positions.length-1?positions[index+1].x:width-right,lo=m.x+8,hi=Math.max(lo,treadEnd-8);
-      const anchors=[...new Set([lo,Math.min(hi,lo+40),(lo+hi)/2,hi].map(Math.round))];
+      const treadEnd=index<positions.length-1?positions[index+1].x:width-right;
+      const curveRects=segments.map(s=>({x1:Math.min(s.x1,s.x2)-1.5,y1:Math.min(s.y1,s.y2)-1.5,x2:Math.max(s.x1,s.x2)+1.5,y2:Math.max(s.y1,s.y2)+1.5}));
       const widths=[maxWidth,210].map(w=>Math.max(minWidth,Math.min(maxWidth,w)));
       let best;
       for(const bw of new Set(widths)){
         const lines=paymentLines(label,bw-20,prefix),bh=lines.length*17+12;
-        for(const ax of anchors)for(const wanted of [ax-14,ax-bw/2,ax-bw+14]){
+        for(const wanted of new Set([m.x+10,m.x+30,m.x+60,(m.x+treadEnd)/2,treadEnd-10].map(Math.round))){
           const bx=Math.min(width-right-bw-4,Math.max(left+4,wanted));
-          if(ax<bx+8||ax>bx+bw-8)continue;
           let by=m.y+10;
           for(let attempt=0;attempt<=obstacles.length;attempt++){
             const hits=obstacles.filter(o=>bx<o.x2&&bx+bw>o.x1&&by<o.y2&&by+bh>o.y1);
             if(!hits.length)break;
             by=Math.max(...hits.map(o=>o.y2));
           }
-          const score=(by-m.y-10)*1.5+Math.abs(bx-(ax-14))*.4+(ax-lo)*.3+(maxWidth-bw)*.06;
-          const candidate={x:bx,y:by,w:bw,h:bh,label,prefix,lines,anchorX:ax,score};
-          const crossed=placed.filter(b=>ax>b.x-3&&ax<b.x+b.w+3&&b.y<by&&b.y+b.h>m.y).length;
-          candidate.score+=crossed*1000;
-          if(!best||candidate.score<best.score)best=candidate;
+          // Straight line from the step corner into the card's nearest top corner.
+          const corner=bx>=m.x?{x:bx,y:by}:{x:bx+bw,y:by},from={x:m.x+1.5,y:m.y+1.5};
+          const crossed=placed.filter(b=>segmentHits(from,corner,{x1:b.x-2,y1:b.y-2,x2:b.x+b.w+2,y2:b.y+b.h+2})).length
+            +curveRects.filter(r=>!(m.x>=r.x1&&m.x<=r.x2&&m.y>=r.y1&&m.y<=r.y2)&&segmentHits(from,corner,r)).length;
+          const score=crossed*1000+(by-m.y-10)*1.5+Math.hypot(corner.x-m.x,corner.y-m.y)*.4+(maxWidth-bw)*.06;
+          if(!best||score<best.score)best={x:bx,y:by,w:bw,h:bh,label,prefix,lines,score,connector:[{x:m.x,y:m.y},corner]};
         }
       }
-      if(best.y-m.y>14)best.connector=[{x:best.anchorX,y:m.y},{x:best.anchorX,y:best.y}];
       m.labelBox=best;placed.push(best);
     }
   }
