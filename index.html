@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="Meilensteine, Teilzahlungen, VSP und Sicherheiten auf einer gemeinsamen Zeitachse planen.">
+  <title>Zahlungsplan · Trapanotto</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20261009-8">
+  <script src="lib/lucide.min.js" defer></script>
+  <script src="app.mjs?v=20261009-8" type="module"></script>
+</head>
+<body>
+  <section class="mobile-notice" aria-labelledby="mobileTitle">
+    <span class="brand-symbol" aria-hidden="true">↗</span>
+    <p class="eyebrow">Trapanotto · Zahlungsplan</p>
+    <h1 id="mobileTitle">Mehr Platz für deine Planung.</h1>
+    <p>Bitte öffne den Zahlungsplan auf einem Desktop oder Tablet, um Meilensteine und Laufzeiten zu bearbeiten.</p>
+    <a class="btn primary" href="https://trapanotto.ch/">Zur Startseite</a>
+  </section>
+  <div class="application">
+    <header class="toolbar">
+      <div class="toolbar-project">
+        <input id="projectTitle" class="title-input" type="text" aria-label="Projektname" title="Projektname bearbeiten" placeholder="Projektname" maxlength="150" autocomplete="off">
+        <button class="btn icon-only subtle" id="projectBtn" aria-label="Projektdaten und Vertragssumme bearbeiten" title="Projektdaten und Vertragssumme"><i data-lucide="settings-2"></i></button>
+      </div>
+      <div class="seg" aria-label="Zeitskala"><button data-scale="week" aria-pressed="false">Wochen</button><button data-scale="month" class="on" aria-pressed="true">Monate</button><button data-scale="quarter" aria-pressed="false">Quartale</button></div>
+      <button class="btn" id="labelsBtn" aria-pressed="true" title="Meilenstein-Beschriftungen ein- oder ausblenden"><i data-lucide="tags"></i><span>Beschriftung</span></button>
+      <div class="file-actions">
+        <div class="undo-group"><button class="btn icon-only" id="undoBtn" aria-label="Rückgängig" title="Rückgängig (Strg+Z)"><i data-lucide="undo-2"></i></button><button class="btn icon-only" id="redoBtn" aria-label="Wiederherstellen" title="Wiederherstellen (Strg+Umschalt+Z)"><i data-lucide="redo-2"></i></button></div>
+        <button class="btn" id="newBtn"><i data-lucide="file-plus-2"></i><span>Neu</span></button>
+        <button class="btn" id="loadBtn"><i data-lucide="folder-open"></i><span>Öffnen</span></button>
+        <button class="btn" id="saveBtn"><i data-lucide="download"></i><span>Speichern</span></button>
+        <button class="btn" id="printOpenBtn" title="Druckvorschau öffnen"><i data-lucide="printer"></i><span>Drucken</span></button>
+        <button class="btn primary" id="exportBtn"><i data-lucide="image"></i><span>Exportieren</span></button>
+      </div>
+      <input id="fileInput" type="file" accept=".json,.html,.htm,application/json,text/html" hidden>
+    </header>
+    <main class="wrap">
+      <div id="storageAlert" class="notice error" role="alert" hidden></div>
+      <div id="warnings" class="notice" role="status" hidden></div>
+      <section class="panel timeline-panel" aria-label="Zahlungszeitplan">
+        <div class="chart-scroll" id="chartScroll" tabindex="0" aria-label="Zeitachse, vollständig auf die Browserbreite eingepasst"><div id="chart"></div></div>
+        <div class="chart-footer"><div class="legend"><span><b class="key line"></b>Teilzahlungen kumuliert</span><span><b class="key security"></b>Sicherheit</span><span><b class="key warranty"></b>Gewährleistung</span><span><b class="key diamond"></b>VSP</span></div><span class="chart-hint">Termine ziehen · Einträge anklicken zum Bearbeiten</span></div>
+      </section>
+      <section class="panel records-panel" aria-label="Planungsdaten">
+        <div class="records-heading"><div class="tabs" role="tablist" aria-label="Planungsdaten"><button id="tab-milestones" role="tab" aria-controls="recordContent" aria-selected="true" data-tab="milestones">Meilensteine &amp; Sicherheiten <span id="milestoneCount">0</span></button><button id="tab-phases" role="tab" aria-controls="recordContent" aria-selected="false" tabindex="-1" data-tab="phases">Projektphasen <span id="phaseCount">0</span></button></div><button class="btn compact" id="addRecordBtn"><i data-lucide="plus"></i><span>Meilenstein</span></button></div>
+        <div id="recordContent" role="tabpanel" aria-labelledby="tab-milestones"></div>
+      </section>
+      <span id="saveStatus" class="visually-hidden" role="status"></span>
+    </main>
+  </div>
+  <dialog id="editor" class="editor"><form id="editForm"><div class="dialog-head"><div><p class="eyebrow" id="dialogEyebrow">Zahlungsplan</p><h2 id="dialogTitle">Meilenstein</h2></div><button class="btn icon-only subtle" type="button" data-close="editor" aria-label="Schliessen"><i data-lucide="x"></i></button></div><div id="formFields" class="form-fields"></div><p id="formError" class="form-error" role="alert" hidden></p><div class="dialog-actions"><button class="btn danger subtle" id="deleteEntryBtn" type="button" hidden><i data-lucide="trash-2"></i>Löschen</button><span class="spacer"></span><button class="btn" type="button" data-close="editor">Abbrechen</button><button class="btn primary" type="submit">Übernehmen</button></div></form></dialog>
+  <dialog id="confirmDialog" class="small-dialog"><div class="dialog-head"><h2 id="confirmTitle">Plan ersetzen?</h2></div><p id="confirmText"></p><div class="dialog-actions"><button class="btn" id="confirmCancel">Abbrechen</button><button class="btn primary" id="confirmOk">Bestätigen</button></div></dialog>
+  <dialog id="newDialog" class="small-dialog"><div class="dialog-head"><h2>Neuer Zahlungsplan</h2><button class="btn icon-only subtle" data-close="newDialog" aria-label="Schliessen"><i data-lucide="x"></i></button></div><p>Wie möchtest du starten?</p><button class="choice" data-new="blank"><i data-lucide="file"></i><div><strong>Leerer Zahlungsplan</strong><span>Eigene Meilensteine und Sicherheiten erfassen.</span></div><i data-lucide="arrow-right"></i></button><button class="choice" data-new="example"><i data-lucide="layout-template"></i><div><strong>Beispiel aus der Vorlage</strong><span>8 Meilensteine, Bürgschaften und Gewährleistung.</span></div><i data-lucide="arrow-right"></i></button></dialog>
+  <dialog id="exportDialog" class="export-dialog" aria-labelledby="exportTitle">
+    <div class="export-bar"><h2 id="exportTitle">PNG Vorschau</h2><div class="seg" id="exportMode" aria-label="Inhalt der Ausgabe"><button data-list="1" aria-pressed="true" class="on">Mit Liste</button><button data-list="0" aria-pressed="false">Nur Diagramm</button></div><label class="export-width">Breite <input id="exportWidth" type="number" min="780" max="4000" step="10" value="1100" aria-label="Ausgabebreite in Pixeln"> px</label><button class="btn icon-only subtle" data-close="exportDialog" aria-label="Schliessen"><i data-lucide="x"></i></button></div>
+    <div class="export-stage" id="exportStage"><div class="export-frame" id="exportFrame"><img id="exportPreview" alt="Vorschau des Zahlungsplans"><div class="export-resize" id="exportResize" role="slider" tabindex="0" aria-label="Ausgabebreite ziehen" aria-orientation="horizontal" aria-valuemin="780" aria-valuemax="4000" aria-valuenow="1100" title="Breite ziehen"></div></div><div class="export-guide" id="exportGuide" hidden></div></div>
+    <p id="exportStatus" role="status"></p><div class="dialog-actions"><button class="btn" data-close="exportDialog">Abbrechen</button><span class="spacer"></span><button class="btn" id="svgBtn">SVG</button><button class="btn" id="printBtn"><i data-lucide="printer"></i>Drucken / PDF</button><button class="btn primary" id="pngBtn"><i data-lucide="download"></i>PNG herunterladen</button></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <noscript><p class="notice error">Bitte JavaScript aktivieren, um den Zahlungsplan zu verwenden.</p></noscript>
+</body>
+</html>
