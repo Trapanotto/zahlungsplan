@@ -25,7 +25,6 @@ dialog{border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 90px #1
 
 /* Editable project title in the toolbar, matching Gantt. */
 .toolbar-project{display:flex;align-items:center;gap:4px;flex:1;min-width:180px;max-width:460px}
-.toolbar-project .btn{flex:0 0 36px}
 .title-input{flex:1;min-width:0;width:100%;font-size:16px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--ink);padding:6px 8px;border-radius:8px;text-overflow:ellipsis}
 .title-input:hover,.title-input:focus{background:#f0f1f6}
 .title-input:focus{outline:2px solid #c7c3ff;outline-offset:1px;border-color:transparent}
@@ -42,6 +41,7 @@ dialog{border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 90px #1
 .table-scroll th,.table-scroll td{overflow-wrap:anywhere;white-space:normal}.table-scroll th{overflow-wrap:normal;hyphens:auto}
 
 .table-scroll .date-cell{font-size:13px}.table-scroll .row-actions{white-space:normal}
+.drag-handle.btn{width:24px;min-height:24px;padding:4px;border:0;color:#8a93a6;cursor:grab;touch-action:none;user-select:none}.drag-handle.btn:hover{background:#eef0f7;color:#4f46e5}.drag-handle.btn:active{cursor:grabbing}.drag-handle svg{width:14px;height:14px}tbody tr.dragging{opacity:.45}tbody tr.drop-before td{box-shadow:inset 0 2px var(--accent)}tbody tr.drop-after td{box-shadow:inset 0 -2px var(--accent)}
 @media(max-width:1100px){
   .table-scroll thead{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden}
   .table-scroll table,.table-scroll tbody{display:block}.table-scroll colgroup{display:none}.table-scroll tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:10px 16px;border-bottom:1px solid var(--line)}
@@ -73,6 +73,8 @@ dialog{border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 90px #1
 
 .toolbar>.seg{flex:0 0 auto}
 @media(max-width:1150px){.toolbar{flex-wrap:wrap}.file-actions{margin-left:auto}}
+  .security-ref,.security-ref b,.security-name{color:var(--ink)}
+  .row-actions{width:120px}.action-buttons{display:flex;align-items:center;justify-content:flex-end;gap:4px}
   </style>
 </head>
 <body>
@@ -87,7 +89,6 @@ dialog{border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 90px #1
     <header class="toolbar">
       <div class="toolbar-project">
         <input id="projectTitle" class="title-input" type="text" aria-label="Projektname" title="Projektname bearbeiten" placeholder="Projektname" maxlength="150" autocomplete="off">
-        <button class="btn icon-only subtle" id="projectBtn" aria-label="Projektdaten und Vertragssumme bearbeiten" title="Projektdaten und Vertragssumme"><i data-lucide="settings-2"></i></button>
       </div>
       <div class="seg" aria-label="Zeitskala"><button data-scale="week" aria-pressed="false">Wochen</button><button data-scale="month" class="on" aria-pressed="true">Monate</button><button data-scale="quarter" aria-pressed="false">Quartale</button></div>
       <button class="btn" id="labelsBtn" aria-pressed="true" title="Meilenstein-Beschriftungen ein- oder ausblenden"><i data-lucide="tags"></i><span>Beschriftung</span></button>
@@ -147,17 +148,15 @@ function validDate(value) {
 const dateLabel = date => validDate(date) ? date.split('-').reverse().join('.') : '–';
 const number = (n, decimals = 2) => new Intl.NumberFormat('de-CH', {maximumFractionDigits: decimals}).format(n);
 const percentLabel = n => number(n) + ' %';
-const money = (n, currency = 'CHF') => new Intl.NumberFormat('de-CH', {style:'currency',currency,maximumFractionDigits:2}).format(n);
 const KINDS = {
   advance:'Anzahlungsbürgschaft', performance:'Vertragserfüllungsbürgschaft',
   warrantyBond:'Gewährleistungsbürgschaft', warranty:'Gewährleistungsfrist', other:'Sonstige Sicherheit'
 };
 const sortedMilestones = p => p.milestones.map((m,i)=>({...m,_order:i})).sort((a,b)=>a.date.localeCompare(b.date)||a._order-b._order);
-const share = (item, p) => item.unit === 'amount' ? (p.total > 0 ? item.value / p.total * 100 : 0) : item.value;
-const amount = (item, p) => item.unit === 'amount' ? item.value : (p.total > 0 ? p.total * item.value / 100 : null);
+const share = item => item.value;
 function cumulative(p) {
   let total = 0;
-  return sortedMilestones(p).map((m,i)=>({...m, index:i+1, percent:share(m,p), cumulative:(total += share(m,p)), amount:amount(m,p)}));
+  return sortedMilestones(p).map((m,i)=>({...m, index:i+1, percent:share(m), cumulative:(total += share(m))}));
 }
 function resolveDate(item, edge, p) {
   return p.milestones.find(m=>m.id === item[edge+'Milestone'])?.date || item[edge];
@@ -166,12 +165,11 @@ function ranges(p) {
   return [...p.securities,...p.phases].flatMap(s=>[resolveDate(s,'start',p),resolveDate(s,'end',p)]).concat(p.milestones.filter(m=>m.value===0).map(m=>m.securityEnd||m.date));
 }
 const milestoneSecurities = (milestoneId,p) => p.securities.filter(s=>s.startMilestone===milestoneId);
-function securitySummary(s,p) {
-  return (s.kind==='warranty'?'':(s.unit==='amount'?money(s.value,p.currency):percentLabel(s.value))+' ')+s.name+' · bis '+dateLabel(resolveDate(s,'end',p))+(s.description?' · '+s.description:'');
+function securitySummary(s) {
+  return s.name+(s.description?' · '+s.description:'');
 }
 function securitiesAtMilestone(milestoneId,p) {
-  const milestone=p.milestones.find(m=>m.id===milestoneId),own=milestone?.value===0?[milestone.name+' · bis '+dateLabel(milestone.securityEnd||milestone.date)]:[];
-  return own.concat(p.securities.filter(s=>s.startMilestone===milestoneId||s.endMilestone===milestoneId).map(s=>s.startMilestone===milestoneId?securitySummary(s,p):'Ende: '+s.name)).join('; ');
+  return p.securities.filter(s=>s.startMilestone===milestoneId).map(securitySummary).join('; ');
 }
 function isoWeek(dayNumber) {
   const date=new Date(dayNumber*DAY),thursday=dayNumber+3-((date.getUTCDay()+6)%7);
@@ -180,16 +178,16 @@ function isoWeek(dayNumber) {
 }
 function warnings(p) {
   const out = [], sum=cumulative(p).at(-1)?.cumulative || 0;
-  if(p.milestones.length && Math.abs(sum-100)>.005) out.push(sum>100 ? `Die Teilzahlungen ergeben ${percentLabel(sum)} – ${percentLabel(sum-100)} über 100 %.` : `Noch ${percentLabel(100-sum)} der Vertragssumme sind nicht zugeordnet.`);
+  if(p.milestones.length && Math.abs(sum-100)>.005) out.push(sum>100 ? `Die Teilzahlungen ergeben ${percentLabel(sum)} – ${percentLabel(sum-100)} über 100 %.` : `Noch ${percentLabel(100-sum)} bis 100 % sind nicht zugeordnet.`);
   for(const s of [...p.securities,...p.phases]) if(resolveDate(s,'end',p)<resolveDate(s,'start',p)) out.push(`„${s.name}“: Das Laufzeitende liegt vor dem Beginn. Bitte Termine prüfen.`);
   for(const m of p.milestones)if(m.value===0&&m.securityEnd&&m.securityEnd<m.date)out.push(`„${m.name}“: Das Laufzeitende liegt vor dem Zieltermin. Bitte Termine prüfen.`);
   return out;
 }
 function blank() {
-  return {format:FORMAT,version:1,title:'Neuer Zahlungsplan',reference:'',total:0,currency:'CHF',notes:'',milestones:[],securities:[],phases:[],demo:false};
+  return {format:FORMAT,version:1,title:'Neuer Zahlungsplan',milestones:[],securities:[],phases:[],demo:false};
 }
 function example() {
-  const p=blank();Object.assign(p,{title:'Beispiel-Zahlungsplan',reference:'Beispielprojekt · Neubau',demo:true});
+  const p=blank();Object.assign(p,{title:'Beispiel-Zahlungsplan',demo:true});
   const rows=[
     ['Bestellabsichtserklärung','2026-07-31',0,'Start Realisierungsplanung'],
     ['Nach Vertragsunterzeichnung (MS 01)','2026-08-14',20,''],
@@ -217,22 +215,39 @@ const text=(v,max=2000)=>typeof v==='string'?v.trim().slice(0,max):'';
 function numeric(v,label,max=1e14){if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>max)throw Error(`${label}: ungültiger Wert.`);return v;}
 function date(v,label){if(!validDate(v))throw Error(`${label}: ungültiges Datum (2000–2100).`);return v;}
 function identity(v,ids){const id=text(v,100);if(!id||ids.has(id))throw Error('Fehlende oder doppelte Eintrags-ID.');ids.add(id);return id;}
+function trimPhaseOverlaps(phases){
+  const ordered=[...phases].sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end)||a.id.localeCompare(b.id)),adjustments=[];
+  for(let i=1;i<ordered.length;i++){
+    const previous=ordered[i-1],next=ordered[i];if(previous.end<next.start)continue;
+    const end=iso(day(next.start)-1);
+    if(end<previous.start)throw Error(`Die Vorgängerphase „${previous.name}“ kann nicht bis vor „${next.name}“ gekürzt werden. Bitte passe die Phasentermine an.`);
+    if(previous.end!==end){previous.end=end;adjustments.push({id:previous.id,name:previous.name,end});}
+  }
+  return adjustments;
+}
 function normalize(raw) {
   if(!raw||raw.format!==FORMAT||raw.version!==1)throw Error('Keine unterstützte Zahlungsplan-Datei (Version 1).');
   if(!Array.isArray(raw.milestones)||!Array.isArray(raw.securities)||!Array.isArray(raw.phases))throw Error('Die Datei enthält keine gültigen Planungsdaten.');
   if(raw.milestones.length>500||raw.securities.length>200||raw.phases.length>100)throw Error('Maximal 500 Meilensteine, 200 Sicherheiten und 100 Phasen werden unterstützt.');
-  const p=blank(),ids=new Set();
-  p.title=text(raw.title,150)||'Zahlungsplan';p.reference=text(raw.reference,300);p.notes=text(raw.notes,5000);p.demo=raw.demo===true;
-  p.currency=['CHF','EUR','USD','GBP'].includes(raw.currency)?raw.currency:'CHF';p.total=numeric(raw.total,'Vertragssumme');
-  const val=(r)=>({unit:r.unit==='amount'?'amount':'percent',value:numeric(r.value,'Teilzahlung / Sicherheit',r.unit==='amount'?1e14:100)});
-  p.milestones=raw.milestones.map(m=>({id:identity(m.id,ids),name:text(m.name,180)||'Meilenstein',date:date(m.date,'Zieltermin'),...val(m),description:text(m.description),vsp:m.vsp===true,vspValue:numeric(m.vspValue??0,'VSP',m.vspUnit==='amount'?1e14:100),vspUnit:m.vspUnit==='amount'?'amount':'percent',vspNote:text(m.vspNote),...(m.value===0||m.securityEnd?{securityEnd:date(m.securityEnd||m.date,'Laufzeitende')}:{})}));
+  const p=blank(),ids=new Set(),legacyTotal=numeric(raw.total??0,'Vertragssumme');
+  p.title=text(raw.title,150)||'Zahlungsplan';p.demo=raw.demo===true;
+  const percentValue=(value,unit,label)=>{
+    const n=numeric(value,label,1e14);
+    if(unit!=='amount'||n===0)return n;
+    if(legacyTotal<=0)throw Error(`${label}: Ein gespeicherter CHF-Wert kann ohne Vertragssumme nicht in Prozent umgewandelt werden.`);
+    const converted=n/legacyTotal*100;
+    if(!Number.isFinite(converted)||converted>1e14)throw Error(`${label}: Der gespeicherte CHF-Wert kann nicht in Prozent umgewandelt werden.`);
+    return converted;
+  };
+  const val=(r,label)=>({unit:'percent',value:percentValue(r.value,r.unit,label)});
+  p.milestones=raw.milestones.map(m=>({id:identity(m.id,ids),name:text(m.name,180)||'Meilenstein',date:date(m.date,'Zieltermin'),...val(m,'Teilzahlung'),description:text(m.description),vsp:m.vsp===true,vspValue:percentValue(m.vspValue??0,m.vspUnit,'VSP'),vspUnit:'percent',vspNote:text(m.vspNote),...(m.value===0||m.securityEnd?{securityEnd:date(m.securityEnd||m.date,'Laufzeitende')}:{})}));
   const refs=new Set(p.milestones.map(m=>m.id));
   p.securities=raw.securities.map(s=>{
     for(const key of ['startMilestone','endMilestone'])if(s[key]&&!refs.has(s[key]))throw Error('Eine Sicherheit verweist auf einen fehlenden Meilenstein.');
-    return {id:identity(s.id,ids),name:text(s.name,180)||'Sicherheit',kind:Object.hasOwn(KINDS,s.kind)?s.kind:'other',...val(s),start:date(s.start,'Beginn'),end:date(s.end,'Laufzeitende'),startMilestone:text(s.startMilestone,100),endMilestone:text(s.endMilestone,100),description:text(s.description)};
+    return {id:identity(s.id,ids),name:text(s.name,2200)||'Sicherheit',kind:Object.hasOwn(KINDS,s.kind)?s.kind:'other',...val(s,'Sicherheit'),start:date(s.start,'Beginn'),end:date(s.end,'Laufzeitende'),startMilestone:text(s.startMilestone,100),endMilestone:text(s.endMilestone,100),description:text(s.description)};
   });
   p.phases=raw.phases.map(s=>({id:identity(s.id,ids),name:text(s.name,180)||'Phase',start:date(s.start,'Phasenbeginn'),end:date(s.end,'Phasenende'),description:text(s.description)}));
-  if(p.total<=0&&[...p.milestones,...p.securities].some(m=>m.unit==='amount'&&m.value>0))throw Error('Für Teilzahlungen oder Sicherheiten als Geldbetrag ist eine Vertragssumme erforderlich.');
+  trimPhaseOverlaps(p.phases);
   // Preserve old standalone securities and their dates when moving them into milestones.
   for(const security of p.securities)if(!security.startMilestone){
     let owner=p.milestones.find(m=>m.date===security.start);
@@ -255,7 +270,7 @@ function fromGantt(raw) {
   }
   return normalize(p);
 }
-return {DAY,FORMAT,uid,copy,day,iso,today,validDate,dateLabel,number,percentLabel,money,KINDS,sortedMilestones,share,amount,cumulative,resolveDate,ranges,milestoneSecurities,securitySummary,securitiesAtMilestone,isoWeek,warnings,blank,example,normalize,fromGantt};
+return {DAY,FORMAT,uid,copy,day,iso,today,validDate,dateLabel,number,percentLabel,KINDS,sortedMilestones,share,cumulative,resolveDate,ranges,milestoneSecurities,securitySummary,securitiesAtMilestone,isoWeek,warnings,blank,example,normalize,fromGantt,trimPhaseOverlaps};
 })();
 
 /* ---- Zeitachse und Bericht ---- */
@@ -307,9 +322,8 @@ function timeline(p,options={}) {
   const width=Math.max(360,options.width||1300);
   const plotW=width-left-right,x=d=>left+(d-start)/(end-start)*plotW,datedX=date=>x(day(date));
   let y=header;
-  const phaseSlots=[],phaseLayout=[];
-  for(const phase of [...p.phases].sort((a,b)=>a.start.localeCompare(b.start))){let slot=phaseSlots.findIndex(end=>end<phase.start);if(slot<0)slot=phaseSlots.length;phaseSlots[slot]=phase.end;phaseLayout.push({phase,slot});}
-  const phaseHeight=Math.max(1,phaseSlots.length)*34+12,phaseY=y;y+=phaseHeight;
+  const phaseLayout=[...p.phases].sort((a,b)=>a.start.localeCompare(b.start));
+  const phaseHeight=54,phaseY=y;y+=phaseHeight;
   // Later securities sit above earlier ones, forming an ascending sequence like the reference.
   const securities=p.securities.filter(s=>s.kind!=='warranty'),warranties=p.securities.filter(s=>s.kind==='warranty');
   const securityRows=[...securities.map(item=>({type:'security',item,date:resolveDate(item,'start',p)})),
@@ -410,17 +424,25 @@ function timeline(p,options={}) {
   content+=text(18,phaseY+phaseHeight/2+5,'Projektphasen','font-size="15" font-weight="650" fill="#3d4860"');
   if(!p.phases.length)content+=text(left+15,phaseY+29,'Noch keine Projektphasen','font-size="13" fill="#6b7489"');
   let clip=0;
-  for(const {phase:s,slot} of phaseLayout){
-    const a=datedX(s.start),b=datedX(s.end)+plotW/(end-start),barY=phaseY+10+slot*34,w=Math.max(3,b-a),cid=prefix+'-phase-'+clip++;
-    defs+=`<clipPath id="${cid}">${rect(a+3,barY,w-6,25,'rx="5"')}</clipPath>`;
+  for(const s of phaseLayout){
+    const a=datedX(s.start),b=datedX(s.end)+plotW/(end-start),barY=phaseY+5,w=Math.max(3,b-a),cid=prefix+'-phase-'+clip++;
+    defs+=`<clipPath id="${cid}">${rect(a+3,barY,Math.max(0,w-6),32,'rx="5"')}</clipPath>`;
     const grip=Math.min(10,w/2);
-    content+=editable('phase',s.id,`${s.name} · ${dateLabel(s.start)} – ${dateLabel(s.end)}`,rect(a,barY,w,25,'rx="5" fill="#e8e5fb" class="focus-shape"')+(w>32?text(a+8,barY+17,cut(s.name,Math.max(3,Math.floor((w-12)/6.7))),`font-size="13" font-weight="600" fill="#685ab3" clip-path="url(#${cid})"`):'')+rect(a,barY-4,grip,33,'fill="transparent" data-edge="start" class="resize-handle"')+rect(a+w-grip,barY-4,grip,33,'fill="transparent" data-edge="end" class="resize-handle"'),true);
+    let bar=rect(a,barY,w,32,'rx="5" fill="#e8e5fb" class="focus-shape"');
+    if(w>32){
+      const maxChars=Math.max(3,Math.floor((w-16)/5.5));
+      let labelLines=wrapped(s.name,maxChars);
+      if(labelLines.length>2)labelLines=[labelLines[0],labelLines[1].slice(0,Math.max(1,maxChars-1))+'…'];
+      const firstBaseline=barY+(32-labelLines.length*10)/2+9;
+      labelLines.forEach((part,i)=>bar+=text(a+8,firstBaseline+i*10,part,`font-size="10" font-weight="600" fill="#685ab3" clip-path="url(#${cid})"`));
+    }
+    content+=editable('phase',s.id,`${s.name} · ${dateLabel(s.start)} – ${dateLabel(s.end)}`,bar+rect(a,barY-4,grip,40,'fill="transparent" data-edge="start" class="resize-handle"')+rect(a+w-grip,barY-4,grip,40,'fill="transparent" data-edge="end" class="resize-handle"'),true);
   }
   const securityRow=(s,rowY,milestone=false)=>{
-    const aDate=milestone?s.date:resolveDate(s,'start',p),bDate=milestone?(s.securityEnd||s.date):resolveDate(s,'end',p),a=datedX(aDate),b=datedX(bDate)+plotW/(end-start),bad=bDate<aDate,w=Math.max(4,b-a),warranty=s.kind==='warranty',title=`${s.name}${warranty||milestone?'':' · '+(s.unit==='amount'?money(s.value,p.currency):percentLabel(s.value))} · ${dateLabel(aDate)} – ${dateLabel(bDate)}`,cid=prefix+'-security-'+clip++;
+    const aDate=milestone?s.date:resolveDate(s,'start',p),bDate=milestone?(s.securityEnd||s.date):resolveDate(s,'end',p),a=datedX(aDate),b=datedX(bDate)+plotW/(end-start),bad=bDate<aDate,w=Math.max(4,b-a),warranty=s.kind==='warranty',title=`${s.name}${warranty||milestone?'':' · '+percentLabel(s.value)} · ${dateLabel(aDate)} – ${dateLabel(bDate)}`,cid=prefix+'-security-'+clip++;
     defs+=`<clipPath id="${cid}">${rect(a+4,rowY+6,w-8,24,'rx="4"')}</clipPath>`;
     let bar=rect(a,rowY+6,w,24,`rx="4" fill="${bad?'#ffe1e6':warranty?'#d9e0eb':'#f8cf76'}" class="focus-shape"`);
-    const label=(warranty||milestone?'':percentLabel(share(s,p))+' · ')+s.name;
+    const label=(warranty||milestone?'':percentLabel(share(s))+' · ')+s.name;
     if(w>32)bar+=text(a+8,rowY+22,cut(label,Math.max(3,Math.floor((w-12)/6.6))),`font-size="13" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550" clip-path="url(#${cid})"`);
     else{const after=width-right-(a+w+8),before=a-left-8,useRight=after>=before,space=useRight?after:before;bar+=text(useRight?a+w+8:a-8,rowY+22,cut(label,Math.max(3,Math.floor(space/7))),`font-size="13" fill="${warranty?'#52647c':'#7c5920'}" font-weight="550"${useRight?'':' text-anchor="end"'}`);}
     for(const [edge,dx] of [['start',a],['end',a+w]])bar+=rect(dx-5,rowY+1,10,34,`fill="transparent" data-edge="${edge}" class="resize-handle"`);
@@ -472,10 +494,8 @@ function wrapped(value,max){max=Math.max(1,max);const words=String(value||'').sp
 function report(p,labels=true,options={}){
   const width=Math.max(520,Math.min(4000,options.width||1480)),withList=options.withList!==false,inner=width-64;
   const chart=timeline(p,{width:inner,labels,scale:options.scale||'month',prefix:'report'});
-  const subtitle=[p.reference,p.total>0?'Vertragssumme '+money(p.total,p.currency):''].filter(Boolean).join(' · '),subLines=subtitle?wrapped(subtitle,Math.floor(inner/6)):[];
-  const chartY=84+subLines.length*15;let y=chartY+chart.height;
+  const chartY=84;let y=chartY+chart.height;
   let body=rect(0,0,width,chartY,'fill="#fff"')+text(32,32,'Trapanotto / Zahlungsplan','font-size="12" font-weight="600" fill="#6c768b"')+text(32,65,cut(p.title,Math.max(10,Math.floor(inner/14))),'font-size="25" font-weight="700" fill="#222b3b"');
-  subLines.forEach((line,i)=>body+=text(32,85+i*15,line,'font-size="11" fill="#7a8598"'));
   body+=`<g transform="translate(32,${chartY})">${chart.content}</g>`;
   const table=(title,headers,weights,rows)=>{
     const sum=weights.reduce((a,b)=>a+b,0),widths=weights.map(w=>inner*w/sum);
@@ -484,18 +504,22 @@ function report(p,labels=true,options={}){
     body+=rect(32,y,inner,headHeight,'rx="4" fill="#eef1f7"');
     let tx=32;headLines.forEach((ls,i)=>{ls.forEach((line,j)=>body+=text(tx+10,y+19+j*15,line,'font-size="10" font-weight="650" fill="#5b6880"'));tx+=widths[i];});y+=headHeight;
     rows.forEach((cells,index)=>{
-      const lines=cells.map((s,i)=>wrapped(s,Math.floor((widths[i]-20)/6))),rh=Math.max(38,Math.max(...lines.map(a=>a.length))*16+18);
+      const lines=cells.map((cell,i)=>wrapped(cell&&typeof cell==='object'?'':cell,Math.floor((widths[i]-20)/6))),rh=Math.max(38,Math.max(...lines.map(a=>a.length))*16+18);
       body+=rect(32,y,inner,rh,`fill="${index%2?'#f8f9fc':'#fff'}"`);tx=32;
-      lines.forEach((ls,i)=>{ls.forEach((line,j)=>body+=text(tx+10,y+22+j*16,line,`font-size="11" fill="${i===0?'#ba702d':'#40506a'}"${i===0?' font-weight="650"':''}`));tx+=widths[i];});y+=rh;
+      cells.forEach((cell,i)=>{
+        if(cell&&typeof cell==='object'&&cell.type==='vsp-marker'){
+          if(cell.active)body+=`<path d="M ${tx+10} ${y+19} l 4 -4 l 4 4 l -4 4 z" fill="#df4662"/>`;
+        }else lines[i].forEach((line,j)=>body+=text(tx+10,y+22+j*16,line,`font-size="11" fill="${i===0?'#ba702d':'#40506a'}"${i===0?' font-weight="650"':''}`));
+        tx+=widths[i];
+      });y+=rh;
       body+=line(32,y,width-32,y,'stroke="#e6eaf2"');
     });
   };
   if(withList){
-    table('Meilensteine & Teilzahlungen',['Teilzahlung','Meilenstein / Beschreibung','Zieltermin','Kumuliert','VSP','Sicherheiten / Beschreibung'],[124,374,112,95,213,498],cumulative(p).map(m=>[
-      percentLabel(m.percent)+(m.amount!==null?' / '+money(m.amount,p.currency):''),m.name+(m.description?' — '+m.description:''),dateLabel(m.date),percentLabel(m.cumulative),m.vsp?('VSP'+(m.vspValue?' · '+(m.vspUnit==='amount'?money(m.vspValue,p.currency):percentLabel(m.vspValue)):'')+(m.vspNote?' · '+m.vspNote:'')):'–',securitiesAtMilestone(m.id,p)||'–'
+    table('Meilensteine & Teilzahlungen',['Teilzahlung','Meilenstein','Zieltermin','Kumuliert','VSP','Sicherheiten / Beschreibung'],[124,374,112,95,213,498],cumulative(p).map(m=>[
+      percentLabel(m.percent),m.name,dateLabel(m.date),percentLabel(m.cumulative),{type:'vsp-marker',active:m.vsp},securitiesAtMilestone(m.id,p)||'–'
     ]));
     if(p.phases.length)table('Projektphasen',['Phase','Beginn','Ende','Beschreibung'],[350,160,160,746],p.phases.map(s=>[s.name,dateLabel(s.start),dateLabel(s.end),s.description||'–']));
-    if(p.notes){y+=28;body+=text(32,y,'Notizen','font-size="13" font-weight="700" fill="#526077"');for(const line of wrapped(p.notes,Math.floor(inner/6))){y+=17;body+=text(32,y,line,'font-size="11" fill="#66748a"');}}
   }
   y+=35;body+=text(32,y,'Zahlungsplan · Trapanotto · '+dateLabel(today()),'font-size="10" fill="#99a2b2"');y+=25;
   return {markup:`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${y}" viewBox="0 0 ${width} ${y}" style="font-family:'Segoe UI',Arial,sans-serif"><defs>${chart.defs}</defs><rect width="100%" height="100%" fill="white"/>${body}</svg>`,width,height:y};
@@ -508,19 +532,51 @@ const $=id=>document.getElementById(id),KEY='trapanotto:zahlungsplan:v1',VIEW='t
 const icon=name=>`<i data-lucide="${name}"></i>`,icons=()=>window.lucide?.createIcons();
 const phone=matchMedia('(pointer:coarse)').matches&&Math.min(screen.width,screen.height)<600;
 document.documentElement.classList.toggle('phone-screen',phone);
-let p=M.example(),history=[],future=[],view={scale:'month',labels:true,tab:'milestones'},chartGeometry,drag=null,ignoreClickUntil=0,editing=null,toastTimer,exportData=null,migrationRaw=null,renamedExample=false;
+function phaseAdjustmentsFrom(raw,project){
+  const phases=Array.isArray(raw?.phases)?raw.phases:[];
+  const originalEnds=new Map(phases.filter(s=>s&&typeof s.id==='string').map(s=>[s.id,s.end]));
+  const gantt=!raw?.format&&!raw?.milestones;
+  if(!gantt&&originalEnds.size)return project.phases.filter(s=>originalEnds.has(s.id)&&originalEnds.get(s.id)!==s.end).map(s=>({id:s.id,name:s.name,end:s.end}));
+  if(!gantt)return [];
+  const ganttEnds=phases.flatMap(phase=>{
+    const activities=Array.isArray(phase?.activities)?phase.activities.filter(a=>M.validDate(a.start)&&M.validDate(a.end)):[];
+    return activities.length?[activities.map(a=>a.end).sort().at(-1)]:[];
+  });
+  return project.phases.filter((s,i)=>ganttEnds[i]!==s.end).map(s=>({id:s.id,name:s.name,end:s.end}));
+}
+function phaseAdjustmentMessage(adjustments){
+  return `${adjustments.length===1?'Vorgängerphase gekürzt':'Vorgängerphasen gekürzt'}: ${adjustments.map(s=>`„${s.name}“ bis ${M.dateLabel(s.end)}`).join('; ')}.`;
+}
+let p=M.example(),history=[],future=[],view={scale:'month',labels:true,tab:'milestones'},chartGeometry,drag=null,rowDrag=null,ignoreClickUntil=0,editing=null,toastTimer,exportData=null,migrationRaw=null,renamedExample=false,phaseAdjustmentsOnLoad=[],phaseTrimmedOnLoad=false;
 // Ein in einer gespeicherten HTML-Datei eingebetteter Plan hat Vorrang, aber nur wenn er neu ist
 // (sonst würden lokale Weiterbearbeitungen beim Neuladen von der alten Einbettung überschrieben).
 let embeddedRaw=null,fromEmbedded=false;
 try{const text=($('embedded-project')?.textContent||'').trim();if(text&&text!=='{}')embeddedRaw=text;}catch{}
 if(embeddedRaw){let applied=null;try{applied=localStorage.getItem(EKEY);}catch{}
-  if(embeddedRaw!==applied){try{const raw=JSON.parse(embeddedRaw);p=!raw.format&&!raw.milestones&&Array.isArray(raw.phases)?M.fromGantt(raw):M.normalize(raw);fromEmbedded=true;try{localStorage.setItem(EKEY,embeddedRaw);}catch{}}catch{}}}
-if(!fromEmbedded)try{const raw=localStorage.getItem(KEY);if(raw){const saved=JSON.parse(raw);p=M.normalize(saved);if(['Palettenfördertechnik','Palettenfördetechnik'].includes(p.title)){p.title='Beispiel-Zahlungsplan';renamedExample=true;}if(saved.securities?.some(s=>!s.startMilestone))migrationRaw=raw;}const v=JSON.parse(localStorage.getItem(VIEW)||'{}');if(['week','month','quarter'].includes(v.scale))view.scale=v.scale;if(typeof v.labels==='boolean')view.labels=v.labels;}
-catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Der gespeicherte Plan konnte nicht geladen werden. Die gespeicherten Daten bleiben zunächst unverändert. Öffne eine gesicherte Datei oder starte bewusst einen neuen Plan.';}
+  if(embeddedRaw!==applied){try{
+    const raw=JSON.parse(embeddedRaw),gantt=!raw.format&&!raw.milestones&&Array.isArray(raw.phases);
+    if(gantt){p=M.fromGantt(raw);phaseAdjustmentsOnLoad=phaseAdjustmentsFrom(raw,p);phaseTrimmedOnLoad=phaseAdjustmentsOnLoad.length>0;}
+    else{p=M.normalize(raw);phaseAdjustmentsOnLoad=phaseAdjustmentsFrom(raw,p);phaseTrimmedOnLoad=phaseAdjustmentsOnLoad.length>0;}
+    fromEmbedded=true;try{localStorage.setItem(EKEY,embeddedRaw);}catch{}
+  }catch(err){$('storageAlert').hidden=false;$('storageAlert').textContent=err.message;}}}
+if(!fromEmbedded)try{
+  const raw=localStorage.getItem(KEY);
+  if(raw){
+    const saved=JSON.parse(raw);p=M.normalize(saved);phaseAdjustmentsOnLoad=phaseAdjustmentsFrom(saved,p);phaseTrimmedOnLoad=phaseAdjustmentsOnLoad.length>0;
+    if(['Palettenfördertechnik','Palettenfördetechnik'].includes(p.title)){p.title='Beispiel-Zahlungsplan';renamedExample=true;}
+    if(saved.securities?.some(s=>!s.startMilestone))migrationRaw=raw;
+  }
+  const v=JSON.parse(localStorage.getItem(VIEW)||'{}');if(['week','month','quarter'].includes(v.scale))view.scale=v.scale;if(typeof v.labels==='boolean')view.labels=v.labels;
+}
+catch(err){$('storageAlert').hidden=false;$('storageAlert').textContent=err.message||'Der gespeicherte Plan konnte nicht geladen werden. Die gespeicherten Daten bleiben zunächst unverändert. Öffne eine gesicherte Datei oder starte bewusst einen neuen Plan.';}
 function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(p));$('saveStatus').textContent='Lokal in diesem Browser gespeichert';$('storageAlert').hidden=true;}catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Der Browser konnte den Plan nicht speichern. Bitte sichere deine Änderungen über „Speichern“ als Datei.';$('saveStatus').textContent='Änderungen noch nicht gesichert';}}
 function saveView(){try{localStorage.setItem(VIEW,JSON.stringify({scale:view.scale,labels:view.labels}));}catch{}}
-function commit(next,message='',keepDemo=false){const clean=M.normalize(next);if(!keepDemo)clean.demo=false;history.push(M.copy(p));if(history.length>50)history.shift();future=[];p=clean;persist();render();if(message)toast(message);}
+function commit(next,message='',keepDemo=false){
+  const candidate=M.copy(next),adjustments=M.trimPhaseOverlaps(candidate.phases),clean=M.normalize(candidate);
+  if(!keepDemo)clean.demo=false;history.push(M.copy(p));if(history.length>50)history.shift();future=[];p=clean;persist();render();
+  const notice=adjustments.length?phaseAdjustmentMessage(adjustments):message;if(notice)toast(notice);
+}
 function undo(){if(!history.length)return;future.push(M.copy(p));p=history.pop();persist();render();toast('Änderung rückgängig gemacht');}
 function redo(){if(!future.length)return;history.push(M.copy(p));p=future.pop();persist();render();toast('Änderung wiederhergestellt');}
 const titleMeasure=document.createElement('canvas').getContext('2d');
@@ -535,7 +591,8 @@ function render(){
 }
 function renderChart(project=p,fixedDomain){const container=$('chartScroll');chartGeometry=timeline(project,{width:container.clientWidth||1300,scale:view.scale,labels:view.labels,domain:fixedDomain});$('chart').innerHTML=chartGeometry.markup;for(const b of document.querySelectorAll('[data-scale]')){const active=b.dataset.scale===view.scale;b.classList.toggle('on',active);b.setAttribute('aria-pressed',active);} $('labelsBtn').setAttribute('aria-pressed',view.labels);}
 const editName=(type,item)=>`<button class="entry-name" data-edit="${type}" data-id="${esc(item.id)}">${esc(item.name)}</button>`;
-const rowActions=(type,item)=>`<td class="row-actions"><button class="btn icon-only subtle" data-edit="${type}" data-id="${esc(item.id)}" aria-label="${esc(item.name)} bearbeiten">${icon('pencil')}</button><button class="btn icon-only subtle danger" data-delete="${type}" data-id="${esc(item.id)}" aria-label="${esc(item.name)} löschen">${icon('trash-2')}</button></td>`;
+const rowDragHandle=type=>type==='milestone'?`<button class="btn icon-only subtle drag-handle" type="button" draggable="true" data-drag-handle aria-label="Meilenstein verschieben" title="Zum Sortieren ziehen">${icon('grip-vertical')}</button>`:'';
+const rowActions=(type,item)=>`<td class="row-actions"><div class="action-buttons">${rowDragHandle(type)}<button class="btn icon-only subtle" data-edit="${type}" data-id="${esc(item.id)}" aria-label="${esc(item.name)} bearbeiten">${icon('pencil')}</button><button class="btn icon-only subtle danger" data-delete="${type}" data-id="${esc(item.id)}" aria-label="${esc(item.name)} löschen">${icon('trash-2')}</button></div></td>`;
 function renderTable(){
   for(const b of document.querySelectorAll('[data-tab]')){const selected=b.dataset.tab===view.tab;b.setAttribute('aria-selected',selected);b.tabIndex=selected?0:-1;}
   $('recordContent').setAttribute('aria-labelledby','tab-'+view.tab);
@@ -545,21 +602,46 @@ function renderTable(){
   let head='',rows='';
   if(type==='milestone'){
     head='<th>Teilzahlung</th><th>Meilenstein</th><th>Zieltermin</th><th>Kumuliert</th><th>VSP</th><th>Sicherheiten / Beschreibung</th><th><span class="secondary">Aktionen</span></th>';
-    rows=M.cumulative(p).map(m=>{
-      const own=m.value===0?`<div class="security-ref"><b>${esc(m.name)}</b><div class="secondary">Laufzeit bis ${M.dateLabel(m.securityEnd||m.date)}</div></div>`:'';
-      const refs=own+p.securities.filter(s=>s.startMilestone===m.id||s.endMilestone===m.id).map(s=>s.startMilestone===m.id?`<div class="security-ref"><button class="entry-name security-name" data-edit="security" data-id="${esc(s.id)}">${s.kind==='warranty'?'':esc(s.unit==='amount'?M.money(s.value,p.currency):M.percentLabel(s.value))+' '}${esc(s.name)}</button><div class="secondary">Laufzeit bis ${M.dateLabel(M.resolveDate(s,'end',p))}${s.description?' · '+esc(s.description):''}</div></div>`:`<div class="security-ref secondary">Ende: ${esc(s.name)}</div>`).join('');
-      return `<tr data-row-id="${esc(m.id)}"><td><div class="payment-value">${M.percentLabel(m.percent)}</div>${m.amount!==null?`<div class="secondary">${M.money(m.amount,p.currency)}</div>`:''}</td><td>${editName(type,m)}${m.description?'<div class="secondary row-description">'+esc(m.description)+'</div>':''}</td><td class="date-cell">${M.dateLabel(m.date)}</td><td class="cumulative">${M.percentLabel(m.cumulative)}<div class="mini-track"><i style="width:${Math.min(100,m.cumulative)}%"></i></div></td><td>${m.vsp?'<span class="vsp-badge">VSP'+(m.vspValue?' · '+(m.vspUnit==='amount'?M.money(m.vspValue,p.currency):M.percentLabel(m.vspValue)):'')+'</span>'+(m.vspNote?'<div class="secondary">'+esc(m.vspNote)+'</div>':''):'<span class="secondary">–</span>'}</td><td>${refs||'<span class="secondary">–</span>'}</td>${rowActions(type,m)}</tr>`;
+    const cumulativeById=new Map(M.cumulative(p).map(m=>[m.id,m]));
+    rows=p.milestones.map(item=>{
+      const m=cumulativeById.get(item.id);if(!m)throw Error('Ein Meilenstein kann nicht angezeigt werden.');
+      const refs=p.securities.filter(s=>s.startMilestone===m.id).map(s=>`<div class="security-ref"><button class="entry-name security-name" data-edit="security" data-id="${esc(s.id)}">${esc(M.securitySummary(s))}</button></div>`).join('');
+      return `<tr data-row-id="${esc(m.id)}"><td><div class="payment-value">${M.percentLabel(m.percent)}</div></td><td>${editName(type,m)}</td><td class="date-cell">${M.dateLabel(m.date)}</td><td class="cumulative">${M.percentLabel(m.cumulative)}<div class="mini-track"><i style="width:${Math.min(100,m.cumulative)}%"></i></div></td><td>${m.vsp?'<span class="vsp-badge" role="img" aria-label="VSP"></span>':''}</td><td>${refs}</td>${rowActions(type,m)}</tr>`;
     }).join('');
   }else{
     head='<th>#</th><th>Projektphase</th><th>Beginn</th><th>Ende</th><th>Dauer</th><th>Aktionen</th>';
     rows=[...p.phases].sort((a,b)=>a.start.localeCompare(b.start)).map((s,i)=>`<tr data-row-id="${esc(s.id)}"><td class="num-cell">${i+1}</td><td>${editName(type,s)}${s.description?'<div class="secondary">'+esc(s.description)+'</div>':''}</td><td>${M.dateLabel(s.start)}</td><td>${M.dateLabel(s.end)}</td><td>${M.number(M.day(s.end)-M.day(s.start)+1)} Tage</td>${rowActions(type,s)}</tr>`).join('');
   }
-  const columns=type==='milestone'?['104px','24%','110px','96px','14%','auto','92px']:['44px','auto','110px','110px','110px','92px'];
+  const columns=type==='milestone'?['104px','24%','110px','96px','14%','auto','120px']:['44px','auto','110px','110px','110px','92px'];
   $('recordContent').innerHTML=`<div class="table-scroll"><table><colgroup>${columns.map(width=>`<col style="width:${width}">`).join('')}</colgroup><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;const headings=[...$('recordContent').querySelectorAll('th')].map(th=>th.textContent);for(const row of $('recordContent').querySelectorAll('tbody tr'))[...row.cells].forEach((cell,i)=>cell.dataset.label=headings[i]);icons();
 }
+$('recordContent').addEventListener('dragstart',e=>{
+  const handle=e.target.closest('[data-drag-handle]');if(!handle||view.tab!=='milestones'||!e.dataTransfer)return;
+  const row=handle.closest('tr[data-row-id]');if(!row)return;
+  rowDrag=row.dataset.rowId;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',rowDrag);row.classList.add('dragging');
+});
+$('recordContent').addEventListener('dragover',e=>{
+  if(!rowDrag||view.tab!=='milestones')return;
+  const row=e.target.closest('tbody tr[data-row-id]');if(!row||row.dataset.rowId===rowDrag)return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  $('recordContent').querySelectorAll('.drop-before,.drop-after').forEach(item=>item.classList.remove('drop-before','drop-after'));
+  row.classList.add(e.clientY>=row.getBoundingClientRect().top+row.getBoundingClientRect().height/2?'drop-after':'drop-before');
+});
+$('recordContent').addEventListener('drop',e=>{
+  const row=e.target.closest('tbody tr[data-row-id]');if(!row||!rowDrag||view.tab!=='milestones')return;
+  e.preventDefault();const sourceId=rowDrag,targetId=row.dataset.rowId,after=e.clientY>=row.getBoundingClientRect().top+row.getBoundingClientRect().height/2;
+  const next=M.copy(p),list=next.milestones,from=list.findIndex(m=>m.id===sourceId),target=list.findIndex(m=>m.id===targetId);
+  rowDrag=null;$('recordContent').querySelectorAll('.dragging,.drop-before,.drop-after').forEach(item=>item.classList.remove('dragging','drop-before','drop-after'));
+  if(from<0||target<0||from===target)return;
+  const [moved]=list.splice(from,1),insert=target+(after?1:0);
+  list.splice(insert>from?insert-1:insert,0,moved);commit(next,'Meilensteinreihenfolge aktualisiert');
+});
+$('recordContent').addEventListener('dragend',()=>{
+  rowDrag=null;$('recordContent').querySelectorAll('.dragging,.drop-before,.drop-after').forEach(item=>item.classList.remove('dragging','drop-before','drop-after'));
+});
 const field=(name,label,value='',type='text',full=false,extra='')=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value)}" ${extra}></div>`;
-const area=(name,label,value='',full=true)=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><textarea id="f-${name}" name="${name}" maxlength="${name==='notes'?5000:2000}" rows="2">${esc(value)}</textarea></div>`;
-const pair=(prefix,label,value,unit,totalRequired=true)=>`<div class="field"><label for="f-${prefix}Value">${label}</label><div class="value-pair"><input id="f-${prefix}Value" name="${prefix}Value" type="number" min="0" max="${unit==='amount'?1e14:100}" step="0.01" required value="${value}"><select id="f-${prefix}Unit" name="${prefix}Unit" aria-label="Einheit ${label}"><option value="percent"${unit!=='amount'?' selected':''}>Prozent (%)</option><option value="amount"${unit==='amount'?' selected':''}${totalRequired&&p.total<=0?' disabled':''}>${p.currency}</option></select></div><small id="f-${prefix}Hint">${totalRequired&&p.total<=0?'Für Geldbeträge zuerst eine Vertragssumme hinterlegen.':'Prozentwerte beziehen sich auf die Vertragssumme.'}</small></div>`;
+const area=(name,label,value='',full=true,maxLength=2000)=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><textarea id="f-${name}" name="${name}" maxlength="${maxLength}" rows="2">${esc(value)}</textarea></div>`;
+const percentField=(prefix,label,value)=>`<div class="field"><label for="f-${prefix}Value">${label}</label><input id="f-${prefix}Value" name="${prefix}Value" type="number" min="0" max="${Math.max(100,Number(value)||0)}" step="0.01" required value="${value}"><small id="f-${prefix}Hint">Wert in Prozent.</small></div>`;
 const select=(name,label,options,value,full=false)=>`<div class="field${full?' full':''}"><label for="f-${name}">${label}</label><select name="${name}" id="f-${name}">${Object.entries(options).map(([v,l])=>`<option value="${esc(v)}"${v===value?' selected':''}>${esc(l)}</option>`).join('')}</select></div>`;
 function milestoneOptions(){return {'':'Festes Datum',...Object.fromEntries(M.sortedMilestones(p).map(m=>[m.id,m.name+' · '+M.dateLabel(m.date)]))};}
 function openEditor(type,id){
@@ -569,18 +651,17 @@ function openEditor(type,id){
     requestAnimationFrame(()=>document.querySelector(`.security-card[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({block:'center'}));
     return;
   }
-  const list={milestone:'milestones',security:'securities',phase:'phases'}[type],item=id?p[list]?.find(x=>x.id===id):null;if(id&&!item)return;
-  editing={type,id:id||M.uid(),securities:type==='milestone'?M.copy(M.milestoneSecurities(id,p)):[]};$('formError').hidden=true;$('deleteEntryBtn').hidden=!item;$('dialogEyebrow').textContent=type==='project'?'Projekt & Berechnung':item?'Eintrag bearbeiten':'Neuer Eintrag';
+  const list={milestone:'milestones',phase:'phases'}[type];if(!list)return;
+  const item=id?p[list]?.find(x=>x.id===id):null;if(id&&!item)return;
+  editing={type,id:id||M.uid(),securities:type==='milestone'?M.copy(M.milestoneSecurities(id,p)):[]};$('formError').hidden=true;$('deleteEntryBtn').hidden=!item;$('dialogEyebrow').textContent=item?'Eintrag bearbeiten':'Neuer Eintrag';
   $('editor').classList.toggle('milestone-editor',type==='milestone');
-  $('dialogTitle').textContent={project:'Projektdaten',milestone:'Meilenstein & Sicherheiten',phase:'Projektphase'}[type];
+  $('dialogTitle').textContent={milestone:'Meilenstein & Sicherheiten',phase:'Projektphase'}[type];
   let html='',start=M.today();
-  if(type==='project'){
-    html=field('title','Projektname',p.title,'text',true,'required maxlength="150"')+field('reference','Projekt / Referenz',p.reference,'text',true,'maxlength="300"')+field('total','Vertragssumme (optional)',p.total||'','number',false,'min="0" max="100000000000000" step="0.01"')+select('currency','Währung',{CHF:'CHF – Schweizer Franken',EUR:'EUR – Euro',USD:'USD – US-Dollar',GBP:'GBP – Britisches Pfund'},p.currency)+`<p class="form-note full">Mit einer Vertragssumme werden Prozentwerte und Geldbeträge automatisch umgerechnet. Eine Änderung der Währung ändert nur die Bezeichnung, nicht die Beträge.</p>`+area('notes','Projektnotizen',p.notes);
-  }else if(type==='milestone'){
+  if(type==='milestone'){
     const last=M.sortedMilestones(p).at(-1)?.date;start=last?M.iso(Math.min(M.day(last)+30,M.day('2100-12-31'))):start;
     const m=item||{name:'',date:start,value:Math.round(Math.max(0,100-(M.cumulative(p).at(-1)?.cumulative||0))*100)/100,unit:'percent',description:'',vsp:false,vspValue:0,vspUnit:'percent',vspNote:''};
     editing.lastDate=m.date;
-    html=field('name','Meilenstein',m.name,'text',true,'required maxlength="180" placeholder="z. B. Nach Vertragsunterzeichnung"')+field('date','Zieltermin',m.date,'date',false,'required min="2000-01-01" max="2100-12-31"')+pair('payment','Teilzahlungswert',m.value,m.unit)+`<div id="nonPaymentSecurity" class="full">${field('securityEnd','Laufzeitende des Sicherheitsbalkens',m.securityEnd||m.date,'date',false,'required min="2000-01-01" max="2100-12-31"')}<p class="form-note">Ohne Teilzahlung wird dieser Meilenstein als Sicherheit dargestellt. Beginn ist der Zieltermin.</p></div>`+area('description','Beschreibung / Vereinbarung',m.description)+`<label class="checkbox-field full"><input type="checkbox" id="f-vsp" name="vsp"${m.vsp?' checked':''}>Meilenstein mit Verzugsschadenspauschale (VSP)</label><div class="fieldset" id="vspFields"${m.vsp?'':' hidden'}>${pair('vsp','Vereinbarte Pauschale (optional)',m.vspValue,m.vspUnit,false)}<p class="form-note">VSP wird separat markiert und nicht zur Teilzahlung addiert. Bedingungen kannst du unten festhalten.</p>${area('vspNote','VSP-Bedingungen / Beschreibung',m.vspNote)}</div><section class="security-section full"><div class="security-section-head"><div><h3>Sicherheiten & Gewährleistung</h3><p>Beginnen am Zieltermin dieses Meilensteins.</p></div><button type="button" class="btn compact" id="addSecurityBtn">${icon('plus')}Sicherheit</button></div><div id="securityEditors"></div></section>`;
+    html=field('name','Meilenstein',m.name,'text',true,'required maxlength="180" placeholder="z. B. Nach Vertragsunterzeichnung"')+field('date','Zieltermin',m.date,'date',false,'required min="2000-01-01" max="2100-12-31"')+percentField('payment','Teilzahlung (%)',m.value)+`<div id="nonPaymentSecurity" class="full">${field('securityEnd','Laufzeitende des Sicherheitsbalkens',m.securityEnd||m.date,'date',false,'required min="2000-01-01" max="2100-12-31"')}<p class="form-note">Ohne Teilzahlung wird dieser Meilenstein als Sicherheit dargestellt. Beginn ist der Zieltermin.</p></div>`+area('description','Beschreibung / Vereinbarung',m.description)+`<label class="checkbox-field full"><input type="checkbox" id="f-vsp" name="vsp"${m.vsp?' checked':''}>Meilenstein mit Verzugsschadenspauschale (VSP)</label><div class="fieldset" id="vspFields"${m.vsp?'':' hidden'}>${percentField('vsp','Vereinbarte Pauschale (%)',m.vspValue)}<p class="form-note">VSP wird separat markiert und nicht zur Teilzahlung addiert. Bedingungen kannst du unten festhalten.</p>${area('vspNote','VSP-Bedingungen / Beschreibung',m.vspNote)}</div><section class="security-section full"><div class="security-section-head"><div><h3>Sicherheiten & Gewährleistung</h3><p>Beginnen am Zieltermin dieses Meilensteins.</p></div><button type="button" class="btn compact" id="addSecurityBtn">${icon('plus')}Sicherheit</button></div><div id="securityEditors"></div></section>`;
   }else{
     const s=item||{name:'',start,end:start,description:''};html=field('name','Projektphase',s.name,'text',true,'required maxlength="180"')+field('start','Beginn',s.start,'date',false,'required min="2000-01-01" max="2100-12-31"')+field('end','Ende',s.end,'date',false,'required min="2000-01-01" max="2100-12-31"')+area('description','Beschreibung',s.description);
   }
@@ -589,27 +670,26 @@ function openEditor(type,id){
 function readSecurityDrafts(){
   if(editing?.type!=='milestone')return;
   editing.securities=editing.securities.map((s,i)=>{
-    const get=key=>$(`f-s${i}${key}`)?.value??s[key],kind=get('kind');
-    return {...s,name:get('name').trim(),kind,value:kind==='warranty'?0:Number(get('Value')),unit:kind==='warranty'?'percent':get('Unit'),start:$('f-date').value,startMilestone:editing.id,endMilestone:get('endMilestone'),end:get('end'),description:get('description')};
+    const get=key=>$(`f-s${i}${key}`)?.value??s[key];
+    return {...s,name:get('text').trim(),value:Number(get('Value')),unit:'percent',start:$('f-date').value,startMilestone:editing.id,endMilestone:get('endMilestone'),end:get('end'),description:''};
   });
 }
 function renderSecurityEditors(){
   if(!$('securityEditors'))return;
   $('securityEditors').innerHTML=editing.securities.length?editing.securities.map((s,i)=>{
-    const prefix='s'+i;
-    return `<div class="security-card" data-id="${esc(s.id)}" data-index="${i}" data-kind="${esc(s.kind)}"><div class="security-card-head"><strong>Sicherheit ${i+1}</strong><button class="btn icon-only subtle danger" type="button" data-security-remove="${i}" aria-label="Sicherheit ${i+1} entfernen">${icon('trash-2')}</button></div><div class="form-fields">${field(prefix+'name','Bezeichnung',s.name,'text',true,'required maxlength="180"')}${select(prefix+'kind','Art',M.KINDS,s.kind)}${pair(prefix,'Wert der Sicherheit',s.value,s.unit)}${select(prefix+'endMilestone','Laufzeitende',milestoneOptions(),s.endMilestone)}${field(prefix+'end','Enddatum',M.resolveDate(s,'end',p),'date',false,'required min="2000-01-01" max="2100-12-31"')}<div class="duration-tools full"><span class="security-start-date"></span><div>${[12,24,36].map(months=>`<button type="button" class="btn compact" data-months="${months}" data-security-index="${i}">+${months} Monate</button>`).join('')}</div></div>${area(prefix+'description','Beschreibung / Bedingungen',s.description)}</div></div>`;
+    const prefix='s'+i,text=[s.name,s.description].filter(Boolean).join(' · ');
+    return `<div class="security-card" data-id="${esc(s.id)}" data-index="${i}" data-kind="${esc(s.kind)}"><div class="security-card-head"><strong>Sicherheit ${i+1}</strong><button class="btn icon-only subtle danger" type="button" data-security-remove="${i}" aria-label="Sicherheit ${i+1} entfernen">${icon('trash-2')}</button></div><div class="form-fields">${area(prefix+'text','Sicherheiten / Beschreibung',text,true,2200)}${percentField(prefix,'Wert der Sicherheit (%)',s.value)}${select(prefix+'endMilestone','Laufzeitende',milestoneOptions(),s.endMilestone)}${field(prefix+'end','Enddatum',M.resolveDate(s,'end',p),'date',false,'required min="2000-01-01" max="2100-12-31"')}<div class="duration-tools full"><span class="security-start-date"></span><div>${[12,24,36].map(months=>`<button type="button" class="btn compact" data-months="${months}" data-security-index="${i}">+${months} Monate</button>`).join('')}</div></div></div></div>`;
   }).join(''):'<p class="security-empty">Für diesen Meilenstein ist noch keine Sicherheit erfasst.</p>';
   icons();syncSecurityCards();
 }
 function syncSecurityCards(){
   if(editing?.type!=='milestone'||!$('f-date'))return;
   for(const card of document.querySelectorAll('.security-card')){
-    const i=card.dataset.index,get=key=>$(`f-s${i}${key}`),kind=get('kind').value,warranty=kind==='warranty';
-    if(card.dataset.kind!==kind&&get('name').value===M.KINDS[card.dataset.kind])get('name').value=M.KINDS[kind];card.dataset.kind=kind;
+    const i=card.dataset.index,get=key=>$(`f-s${i}${key}`),warranty=card.dataset.kind==='warranty';
     const endId=get('endMilestone').value,m=p.milestones.find(m=>m.id===endId);get('end').disabled=!!m;
     if(m)get('end').value=m.id===editing.id?$('f-date').value:m.date;
-    get('Value').disabled=warranty;get('Unit').disabled=warranty;get('Value').max=get('Unit').value==='amount'?1e14:100;
-    get('Hint').textContent=warranty?'Gewährleistungsfrist ohne Sicherheitsbetrag.':p.total>0?'Entspricht '+(get('Unit').value==='amount'?M.percentLabel(Number(get('Value').value)/p.total*100):M.money(Number(get('Value').value)*p.total/100,p.currency)):'Für Geldbeträge zuerst eine Vertragssumme hinterlegen.';
+    get('Value').disabled=warranty;
+    get('Hint').textContent=warranty?'Gewährleistungsfrist ohne Sicherheitsbetrag.':'Wert in Prozent.';
     card.querySelector('.security-start-date').textContent='Beginn: '+M.dateLabel($('f-date').value)+' · mit diesem Meilenstein';
   }
 }
@@ -617,34 +697,27 @@ function syncForm(){
   if($('nonPaymentSecurity')){const visible=Number($('f-paymentValue').value)===0,end=$('f-securityEnd'),date=$('f-date').value;if(end.value===editing.lastDate)end.value=date;editing.lastDate=date;end.disabled=!visible;$('nonPaymentSecurity').hidden=!visible;}
 
   if($('f-vsp')){$('vspFields').hidden=!$('f-vsp').checked;for(const input of $('vspFields').querySelectorAll('input,select,textarea'))input.disabled=!$('f-vsp').checked;}
-  for(const prefix of ['payment','vsp'])if($('f-'+prefix+'Unit')){
-    const unit=$('f-'+prefix+'Unit').value,value=Number($('f-'+prefix+'Value').value);$('f-'+prefix+'Value').max=unit==='amount'?1e14:100;
-    if(p.total>0)$('f-'+prefix+'Hint').textContent='Entspricht '+(unit==='amount'?M.percentLabel(value/p.total*100):M.money(value*p.total/100,p.currency));
-  }
   syncSecurityCards();
 }
 $('editForm').addEventListener('input',syncForm);$('editForm').addEventListener('change',syncForm);
 $('editForm').addEventListener('submit',e=>{
   e.preventDefault();const f=new FormData(e.currentTarget),val=name=>String(f.get(name)||'').trim(),num=name=>Number(f.get(name)||0),next=M.copy(p),{type,id}=editing;
   try{
-    if(type==='project'){Object.assign(next,{title:val('title'),reference:val('reference'),total:num('total'),currency:val('currency'),notes:val('notes')});}
-    else{
-      let item={id,name:val('name'),description:val('description')};
-      if(!item.name)throw Error('Bitte eine Bezeichnung eingeben.');
-      if(type==='milestone'){
-        Object.assign(item,{date:val('date'),value:num('paymentValue'),unit:val('paymentUnit'),vsp:f.has('vsp'),vspValue:num('vspValue'),vspUnit:val('vspUnit')||'percent',vspNote:val('vspNote')});
-        if(item.value===0){item.securityEnd=val('securityEnd')||item.date;if(item.securityEnd<item.date)throw Error('Das Laufzeitende darf nicht vor dem Zieltermin liegen.');}
-        readSecurityDrafts();
-        for(const security of editing.securities){
-          if(!security.name)throw Error('Bitte für jede Sicherheit eine Bezeichnung eingeben.');
-          if(!M.validDate(security.end))throw Error('Bitte ein gültiges Laufzeitende für „'+security.name+'“ eingeben.');
-          if(security.end<item.date)throw Error('Das Laufzeitende von „'+security.name+'“ darf nicht vor dem Meilenstein liegen.');
-        }
-        next.securities=[...next.securities.filter(s=>s.startMilestone!==id),...M.copy(editing.securities)];
-      }else Object.assign(item,{start:val('start'),end:val('end')});
-      if(item.start&&item.end<item.start)throw Error('Das Laufzeitende darf nicht vor dem Beginn liegen.');
-      const list=next[{milestone:'milestones',security:'securities',phase:'phases'}[type]],i=list.findIndex(x=>x.id===id);if(i<0)list.push(item);else list[i]=item;
-    }
+    let item={id,name:val('name'),description:val('description')};
+    if(!item.name)throw Error('Bitte eine Bezeichnung eingeben.');
+    if(type==='milestone'){
+      Object.assign(item,{date:val('date'),value:num('paymentValue'),unit:'percent',vsp:f.has('vsp'),vspValue:num('vspValue'),vspUnit:'percent',vspNote:val('vspNote')});
+      if(item.value===0){item.securityEnd=val('securityEnd')||item.date;if(item.securityEnd<item.date)throw Error('Das Laufzeitende darf nicht vor dem Zieltermin liegen.');}
+      readSecurityDrafts();
+      for(const security of editing.securities){
+        if(!security.name)throw Error('Bitte für jede Sicherheit eine Bezeichnung eingeben.');
+        if(!M.validDate(security.end))throw Error('Bitte ein gültiges Laufzeitende für „'+security.name+'“ eingeben.');
+        if(security.end<item.date)throw Error('Das Laufzeitende von „'+security.name+'“ darf nicht vor dem Meilenstein liegen.');
+      }
+      next.securities=[...next.securities.filter(s=>s.startMilestone!==id),...M.copy(editing.securities)];
+    }else Object.assign(item,{start:val('start'),end:val('end')});
+    if(item.start&&item.end<item.start)throw Error('Das Laufzeitende darf nicht vor dem Beginn liegen.');
+    const list=next[{milestone:'milestones',phase:'phases'}[type]],i=list.findIndex(x=>x.id===id);if(i<0)list.push(item);else list[i]=item;
     if(!next.title)throw Error('Bitte einen Projektnamen eingeben.');
     commit(next);$('editor').close();
   }catch(err){$('formError').hidden=false;$('formError').textContent=err.message;}
@@ -669,11 +742,11 @@ document.addEventListener('click',async e=>{
   if(b.dataset.tab){view.tab=b.dataset.tab;renderTable();}
   if(b.dataset.scale){view.scale=b.dataset.scale;saveView();renderChart();}
   if(b.id==='addSecurityBtn'){
-    readSecurityDrafts();const start=$('f-date').value||M.today();editing.securities.push({id:M.uid(),name:'Anzahlungsbürgschaft',kind:'advance',value:0,unit:'percent',start,startMilestone:editing.id,end:M.iso(Math.min(M.day(start)+365,M.day('2100-12-31'))),endMilestone:'',description:''});renderSecurityEditors();$('securityEditors').lastElementChild?.scrollIntoView({block:'center'});
+    readSecurityDrafts();const start=$('f-date').value||M.today();editing.securities.push({id:M.uid(),name:'Sicherheit',kind:'other',value:0,unit:'percent',start,startMilestone:editing.id,end:M.iso(Math.min(M.day(start)+365,M.day('2100-12-31'))),endMilestone:'',description:''});renderSecurityEditors();$('securityEditors').lastElementChild?.scrollIntoView({block:'center'});
   }
   if(b.dataset.securityRemove!==undefined){readSecurityDrafts();editing.securities.splice(Number(b.dataset.securityRemove),1);renderSecurityEditors();}
   if(b.dataset.months){const start=$('f-date').value;if(!M.validDate(start))return;const d=new Date(start+'T00:00:00Z'),desired=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+Number(b.dataset.months));const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(desired,last));const end=d.toISOString().slice(0,10);if(!M.validDate(end)){toast('Das Laufzeitende muss spätestens im Jahr 2100 liegen.');return;}const prefix='f-s'+b.dataset.securityIndex;$(prefix+'endMilestone').value='';$(prefix+'end').disabled=false;$(prefix+'end').value=end;}
-  if(b.dataset.new){$('newDialog').close();if(p.milestones.length||p.securities.length||p.phases.length){if(!await ask('Aktuellen Plan ersetzen?','Speichere den aktuellen Plan bei Bedarf vorher als Datei. Du kannst den Wechsel auch rückgängig machen.','Neuen Plan starten'))return;}commit(b.dataset.new==='example'?M.example():M.blank(),'Neuer Plan geöffnet',true);if(b.dataset.new==='blank')openEditor('project');}
+  if(b.dataset.new){$('newDialog').close();if(p.milestones.length||p.securities.length||p.phases.length){if(!await ask('Aktuellen Plan ersetzen?','Speichere den aktuellen Plan bei Bedarf vorher als Datei. Du kannst den Wechsel auch rückgängig machen.','Neuen Plan starten'))return;}commit(b.dataset.new==='example'?M.example():M.blank(),'Neuer Plan geöffnet',true);}
 });
 $('deleteEntryBtn').onclick=()=>deleteEntry(editing.type,editing.id);
 function saveProjectTitle(){
@@ -689,7 +762,7 @@ $('projectTitle').onkeydown=e=>{
   if(e.key==='Escape'){e.preventDefault();e.currentTarget.value=p.title;fitProjectTitle();e.currentTarget.blur();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveProjectTitle();saveFile();}
 };
-$('projectBtn').onclick=()=>openEditor('project');$('addRecordBtn').onclick=()=>openEditor({milestones:'milestone',phases:'phase'}[view.tab]);
+$('addRecordBtn').onclick=()=>openEditor({milestones:'milestone',phases:'phase'}[view.tab]);
 $('undoBtn').onclick=undo;$('redoBtn').onclick=redo;$('newBtn').onclick=()=>$('newDialog').showModal();
 $('labelsBtn').onclick=()=>{view.labels=!view.labels;saveView();renderChart();};
 
@@ -755,9 +828,10 @@ $('fileInput').onchange=async e=>{
       const match=source.match(/<script\b[^>]*\bid=["']embedded-project["'][^>]*>([\s\S]*?)<\/script>/i);
       if(!match)throw Error('Die HTML-Datei enthält keinen gespeicherten Zahlungsplan und kein Gantt-Projekt.');raw=JSON.parse(match[1]);
     }else raw=JSON.parse(source);
-    const gantt=!raw.format&&!raw.milestones&&Array.isArray(raw.phases),loaded=gantt?M.fromGantt(raw):M.normalize(raw);
+    const gantt=!raw.format&&!raw.milestones&&Array.isArray(raw.phases),loaded=gantt?M.fromGantt(raw):M.normalize(raw),fileAdjustments=phaseAdjustmentsFrom(raw,loaded);
     if(!await ask('Datei öffnen?',`„${loaded.title}“ ersetzt den aktuellen Plan.${gantt?' Gantt-Meilensteine und Phasen werden übernommen. Die Teilzahlungen kannst du anschliessend ergänzen.':' Speichere den bisherigen Plan bei Bedarf vorher als Datei.'}`,'Öffnen'))return;
-    commit(loaded,gantt?'Gantt-Meilensteine und Projektphasen importiert':'Zahlungsplan geladen',true);
+    const message=[gantt?'Gantt-Meilensteine und Projektphasen importiert':'Zahlungsplan geladen',fileAdjustments.length?phaseAdjustmentMessage(fileAdjustments):''].filter(Boolean).join(' ');
+    commit(loaded,message,true);
   }catch(err){toast(err instanceof SyntaxError?'Die Datei enthält keine gültigen Planungsdaten.':err.message);}
 };
 
@@ -769,7 +843,7 @@ $('chart').addEventListener('pointerdown',e=>{
   const list={milestone:'milestones',security:'securities',phase:'phases'}[type],item=p[list]?.find(s=>s.id===id);if(!item)return;
   const date=type==='milestone'?(edge==='end'?(item.securityEnd||item.date):item.date):M.resolveDate(item,edge||'start',p);
   e.preventDefault();const bounds=$('chart').querySelector('svg').getBoundingClientRect();
-  drag={type,id,edge,startX:e.clientX,startY:e.clientY,date,original:M.copy(p),next:M.copy(p),geometry:{...chartGeometry},ratio:chartGeometry.width/bounds.width,moved:false,pointer:e.pointerId};
+  drag={type,id,edge,startX:e.clientX,startY:e.clientY,date,original:M.copy(p),next:M.copy(p),geometry:{...chartGeometry},ratio:chartGeometry.width/bounds.width,moved:false,pointer:e.pointerId,phaseAdjustments:[],phaseError:''};
 });
 window.addEventListener('pointermove',e=>{
   if(!drag||e.pointerId!==drag.pointer)return;const dx=e.clientX-drag.startX;if(Math.abs(dx)<4&&!drag.moved)return;
@@ -790,9 +864,22 @@ window.addEventListener('pointermove',e=>{
     if(drag.type==='phase'){item.start=limited(M.day(start)+shift);item.end=limited(M.day(end)+shift);}
     else{const moved=new Set();for(const edge of ['start','end']){const id=item[edge+'Milestone'];if(id){if(!moved.has(id)){moveMilestone(next,id,limited(M.day(M.resolveDate(item,edge,drag.original))+shift));moved.add(id);}}else item[edge]=limited(M.day(item[edge])+shift);}}
   }
+  drag.phaseAdjustments=[];drag.phaseError='';
+  if(drag.type==='phase'){
+    try{drag.phaseAdjustments=M.trimPhaseOverlaps(next.phases);}
+    catch(err){drag.phaseError=err.message;$('saveStatus').textContent=err.message;return;}
+  }
   drag.next=next;const range=domain(next,view.scale);renderChart(next,{start:Math.min(g.start,range.start),end:Math.max(g.end,range.end)});$('saveStatus').textContent='Termin: '+M.dateLabel(date);
 },{passive:false});
-window.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.pointer)return;const current=drag;drag=null;if(current.moved){ignoreClickUntil=performance.now()+350;commit(current.next,'Termin aktualisiert');}});
+window.addEventListener('pointerup',e=>{
+  if(!drag||e.pointerId!==drag.pointer)return;const current=drag;drag=null;
+  if(current.moved){
+    ignoreClickUntil=performance.now()+350;
+    if(current.phaseError){render();toast(current.phaseError);return;}
+    const message=current.phaseAdjustments.length?phaseAdjustmentMessage(current.phaseAdjustments):'Termin aktualisiert';
+    try{commit(current.next,message);}catch(err){render();toast(err.message);}
+  }
+});
 function cancelDrag(){if(!drag)return;drag=null;render();$('saveStatus').textContent='Verschieben abgebrochen';}
 window.addEventListener('pointercancel',cancelDrag);window.addEventListener('blur',cancelDrag);
 $('chart').addEventListener('click',e=>{if(performance.now()<ignoreClickUntil)return;const g=e.target.closest('[data-type][data-id]');if(g)openEditor(g.dataset.type,g.dataset.id);});
@@ -872,9 +959,14 @@ window.addEventListener('beforeprint',()=>{if(!printing)preparePrint($('exportDi
 let resizeTimer,lastWidth=0;new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(Math.abs(width-lastWidth)<1)return;lastWidth=width;clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!drag)renderChart();},100);}).observe($('chartScroll'));
 render();document.addEventListener('DOMContentLoaded',icons,{once:true});
 if(fromEmbedded)persist();
-if(migrationRaw){try{if(!localStorage.getItem(KEY+':before-merge'))localStorage.setItem(KEY+':before-merge',migrationRaw);persist();toast('Bestehende Sicherheiten wurden an Meilensteine gekoppelt. Bisherige Werte und Termine bleiben erhalten.');}catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Die Sicherheiten wurden im geöffneten Plan zugeordnet. Bitte sichere den Plan als Datei; der Browser konnte ihn nicht speichern.';}}
-
+let startupMessage='';
+if(migrationRaw){try{if(!localStorage.getItem(KEY+':before-merge'))localStorage.setItem(KEY+':before-merge',migrationRaw);persist();startupMessage='Bestehende Sicherheiten wurden an Meilensteine gekoppelt. Bisherige Werte und Termine bleiben erhalten.';}catch{$('storageAlert').hidden=false;$('storageAlert').textContent='Die Sicherheiten wurden im geöffneten Plan zugeordnet. Bitte sichere den Plan als Datei; der Browser konnte ihn nicht speichern.';}}
 if(renamedExample&&!migrationRaw)persist();
+if(phaseTrimmedOnLoad){
+  if(!fromEmbedded&&!migrationRaw&&!renamedExample)persist();
+  startupMessage=[startupMessage,phaseAdjustmentMessage(phaseAdjustmentsOnLoad)].filter(Boolean).join(' ');
+}
+if(startupMessage)toast(startupMessage);
 </script>
 </body>
 </html>
