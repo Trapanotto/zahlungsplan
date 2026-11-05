@@ -134,7 +134,7 @@ dialog{border:1px solid var(--line);border-radius:15px;box-shadow:0 24px 90px #1
   <dialog id="exportDialog" class="export-dialog" aria-labelledby="exportTitle">
     <div class="export-bar"><h2 id="exportTitle">PNG Vorschau</h2><div class="seg" id="exportMode" aria-label="Inhalt der Ausgabe"><button data-list="1" aria-pressed="true" class="on">Mit Liste</button><button data-list="0" aria-pressed="false">Nur Diagramm</button></div><label class="export-width">Breite <input id="exportWidth" type="number" min="780" max="4000" step="10" value="1100" aria-label="Ausgabebreite in Pixeln"> px</label><button class="btn icon-only subtle" data-close="exportDialog" aria-label="Schliessen"><i data-lucide="x"></i></button></div>
     <div class="export-stage" id="exportStage"><div class="export-frame" id="exportFrame"><img id="exportPreview" alt="Vorschau des Zahlungsplans"><div class="export-resize" id="exportResize" role="slider" tabindex="0" aria-label="Ausgabebreite ziehen" aria-orientation="horizontal" aria-valuemin="780" aria-valuemax="4000" aria-valuenow="1100" title="Breite ziehen"></div></div><div class="export-guide" id="exportGuide" hidden></div></div>
-    <p id="exportStatus" role="status"></p><div class="dialog-actions"><button class="btn" data-close="exportDialog">Abbrechen</button><span class="spacer"></span><button class="btn" id="svgBtn">SVG</button><button class="btn primary" id="pngBtn"><i data-lucide="download"></i>PNG herunterladen</button></div>
+    <p id="exportStatus" role="status"></p><div class="dialog-actions"><button class="btn" data-close="exportDialog">Abbrechen</button><span class="spacer"></span><button class="btn primary" id="pngBtn"><i data-lucide="download"></i>PNG herunterladen</button></div>
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
   <noscript><p class="notice error">Bitte JavaScript aktivieren, um den Zahlungsplan zu verwenden.</p></noscript>
@@ -1040,7 +1040,7 @@ function queueExport(delay=70){clearTimeout(exportTimer);exportTimer=setTimeout(
 async function renderExport(){
   if(!$('exportDialog').open)return;
   const revision=++exportRevision,project=M.copy(p),cfg={...exportCfg,scale:view.scale},data=report(project,cfg),url=URL.createObjectURL(new Blob([data.markup],{type:'image/svg+xml;charset=utf-8'}));
-  for(const id of ['pngBtn','svgBtn'])$(id).disabled=true;
+  $('pngBtn').disabled=true;
   $('exportStatus').textContent='Vorschau wird erstellt …';
   try{
     const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Die Vorschau konnte nicht erstellt werden.'));img.src=url;});
@@ -1048,11 +1048,11 @@ async function renderExport(){
     const old=exportData?.url;exportData={...data,url};exportCfg.height=data.height;
     $('exportPreview').src=url;fitExportFrame();if(old)URL.revokeObjectURL(old);
     $('exportStatus').textContent=`${data.width} × ${data.height} px · Breite am rechten Griff ziehen`;
-    for(const id of ['pngBtn','svgBtn'])$(id).disabled=false;
+    $('pngBtn').disabled=false;
   }catch(err){URL.revokeObjectURL(url);if(revision===exportRevision)$('exportStatus').textContent=err.message;}
 }
 function openExport(){
-  $('exportTitle').textContent='PNG Vorschau';$('pngBtn').classList.add('primary');$('svgBtn').classList.remove('primary');
+  $('exportTitle').textContent='PNG Vorschau';
   exportCfg.width=clampExportWidth(exportCfg.width);$('exportDialog').showModal();fitExportFrame();renderExport();
 }
 $('exportBtn').onclick=openExport;
@@ -1068,7 +1068,6 @@ function finishExportResize(e){if(!exportDrag||e.pointerId!==exportDrag.pointer)
 window.addEventListener('pointerup',finishExportResize);window.addEventListener('pointercancel',finishExportResize);
 $('exportDialog').addEventListener('close',()=>{exportRevision++;clearTimeout(exportTimer);exportDrag=null;$('exportGuide').hidden=true;});
 new ResizeObserver(()=>{if($('exportDialog').open&&!exportDrag)fitExportFrame();}).observe(exportStage);
-$('svgBtn').onclick=()=>{if(exportData)download(new Blob([exportData.markup],{type:'image/svg+xml'}),filename('svg'));};
 $('pngBtn').onclick=async()=>{
   if(!exportData)return;const data=exportData;$('pngBtn').disabled=true;
   try{const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=data.url;});const scale=Math.min(2,16000/data.width,16000/data.height,Math.sqrt(60000000/(data.width*data.height))),canvas=document.createElement('canvas');canvas.width=Math.round(data.width*scale);canvas.height=Math.round(data.height*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);const png=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!png)throw Error('PNG konnte nicht erstellt werden.');download(png,filename('png'));}
