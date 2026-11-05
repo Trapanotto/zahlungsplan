@@ -179,8 +179,7 @@ function ranges(p) {
 }
 const milestoneSecurities = (milestoneId,p) => p.securities.filter(s=>s.startMilestone===milestoneId);
 function securityLabel(s) {
-  const amount=s.kind!=='warranty'&&Number(s.value)>0?`${percentLabel(s.value)} `:'';
-  return amount+s.name;
+  return s.name;
 }
 function milestoneText(m,p) {
   const description=milestoneDescription(m);
